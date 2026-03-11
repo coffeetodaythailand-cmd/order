@@ -937,7 +937,7 @@ function buildProductRow(p, idx, catName, isDraggable) {
           ? `<i class="fas fa-grip-lines" style="color:#DDD; font-size:13px;"></i><input type="number" value="${idx + 1}" onchange="moveItemManual(${idx}, this.value - 1)" style="width:40px; height:28px; border:1px solid var(--red); border-radius:6px; text-align:center; font-weight:bold; font-size:13px; color:var(--red); background:white;">` 
           : `<div style="background:#f0f0f0; padding:4px 8px; border-radius:6px; font-size:11px; color:#666; font-weight:bold; border:1px solid #e5e7eb;">${catName}</div>`}
         <div>
-          <span style="font-weight:600; color:#333; font-size:15px;">${p.name}</span>
+          <span style="font-weight:bold; color:#333; font-size:15px;">${p.name}</span>
           <div style="margin-top:3px;"><span class="status-badge ${sClass}" style="padding:2px 8px; font-size:10px;">${sText}</span></div>
         </div>
       </div>

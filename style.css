@@ -797,8 +797,9 @@ tr:hover td {
     white-space: normal;
     word-break: break-word;
     margin-right: 8px;
-    line-height: 1.3;
-    font-size: 12px; /* ลดขนาดฟอนต์หมวดหมู่ */
+    line-height: 1.3;    
+    font-size: 15px; /* ปรับขนาดฟอนต์หมวดหมู่ */
+    font-weight: bold;
 }
 
 .chip.active { 
