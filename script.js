@@ -201,8 +201,8 @@ function toggleSidebar() {
   const mainContent = document.querySelector('.main-content');
   const overlay = document.querySelector('.sidebar-overlay');
 
-  // 📱 Mobile Logic: ใช้ Class 'mobile-open' และเปิด Overlay
-  if (window.innerWidth <= 768) {
+  // 📱 Mobile Logic: 
+  if (isMobile) {
     if (sidebar) sidebar.classList.toggle('mobile-open');
     if (overlay) overlay.classList.toggle('active');
   } 
