@@ -196,15 +196,24 @@ function initApp(token) {
 }
 
 /** ✅ ฟังก์ชันย่อ/ขยาย Sidebar */
-function toggleSidebar() {
+function toggleSidebar(isMobileAction) {
   const sidebar = document.querySelector('.sidebar');
   const mainContent = document.querySelector('.main-content');
   const overlay = document.querySelector('.sidebar-overlay');
 
-  // 📱 Mobile Logic: 
-  if (isMobile) {
+  // ถ้าถูกเรียกจากปุ่มมือถือ (true) หรือหน้าจอเล็กกว่า 768px ให้ใช้โหมดมือถือ
+  const useMobileLogic = (isMobileAction === true) || (window.innerWidth <= 768);
+
+  if (useMobileLogic) {
     if (sidebar) sidebar.classList.toggle('mobile-open');
     if (overlay) overlay.classList.toggle('active');
+    
+    // 🛡️ บังคับ CSS Display โดยตรงเพื่อความชัวร์ 100%
+    if (overlay.classList.contains('active')) {
+      overlay.style.display = 'block';
+    } else {
+      overlay.style.display = 'none';
+    }
   } 
   // 💻 Desktop Logic: ใช้ Class 'collapsed' แบบเดิม
   else {

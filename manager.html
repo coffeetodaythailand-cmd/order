@@ -13,7 +13,7 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
-  <link rel="stylesheet" href="style.css?v=nitro2">
+  <link rel="stylesheet" href="style.css?v=nitro3">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -94,7 +94,7 @@
 
 <div id="main-app">
   
-  <div class="sidebar-overlay" onclick="toggleSidebar()" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999;"></div>
+  <div class="sidebar-overlay" onclick="toggleSidebar(true)" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999;"></div>
 
   <!-- Sidebar Section -->
   <div class="sidebar">
@@ -103,7 +103,7 @@
         <i class="fas fa-coffee" style="color:var(--red); font-size: 24px;"></i>
         <span class="brand-name" style="font-family: 'Prompt'; font-weight: 600; font-size: 18px; letter-spacing: 0.5px;">CoffeeToday</span>
       </div>
-      <button id="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <button id="toggle-btn" onclick="toggleSidebar(false)"><i class="fas fa-bars"></i></button>
     </div>
     
     <ul class="sidebar-menu">
@@ -142,7 +142,7 @@
         <i class="fas fa-coffee" style="color:var(--red); font-size: 20px;"></i>
         <span style="font-family:'Prompt'; font-weight:600; font-size:16px; color:#333;">CoffeeToday</span>
       </div>
-      <button onclick="toggleSidebar()" style="background:none; border:none; font-size:22px; color:#555;"><i class="fas fa-bars"></i></button>
+      <button onclick="toggleSidebar(true)" style="background:none; border:none; font-size:22px; color:#555;"><i class="fas fa-bars"></i></button>
     </div>
 
     <div class="container">
@@ -519,6 +519,6 @@
     </div>
   </div>
 </div>
-<script src="script.js?v=nitro2"></script>
+<script src="script.js?v=nitro3"></script>
 </body>
 </html>
