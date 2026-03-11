@@ -254,6 +254,15 @@ function switchPage(pageName) {
       item.classList.add('active');
     }
   });
+
+  // ✅ Auto-close sidebar on mobile after selection
+  if (window.innerWidth <= 768) {
+    const sidebar = document.querySelector('.sidebar');
+    // Only close if it's currently open
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+      toggleSidebar(true);
+    }
+  }
 }
 
 /**
