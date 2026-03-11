@@ -1,4 +1,11 @@
-# Documentation & Context Files
+# System Files
+.DS_Store
+Thumbs.db
+
+# Editor Config
+.vscode/
+
+# Private Project Files
 project_notes.md
-coffeetoday_context.md
-changelog.md
+context/
+*.log
