@@ -19,3 +19,7 @@ node_modules/
 # Build & Testing
 dist/
 coverage/
+
+# Documentation & AI Context (Local Only)
+project_notes.md
+coffeetoday_context.md
