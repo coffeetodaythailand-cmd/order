@@ -618,14 +618,14 @@ function renderTable() {
 
     rowsHtml += '<tr class="' + (isSuccessStatus ? 'row-ready' : '') + '">';
     rowsHtml += '<td>';
-    rowsHtml += '<b style="color:var(--red); cursor:pointer; text-decoration:underline; font-size:12px;" onclick="viewOrderDetail(\'' + item.id + '\')">' + item.id + '</b>';
+    rowsHtml += '<b style="color:var(--red); cursor:pointer; text-decoration:underline; font-size:15px; white-space:nowrap;" onclick="viewOrderDetail(\'' + item.id + '\')">' + item.id + '</b>';
     rowsHtml += '<br>' + timeStampHtml;
     rowsHtml += '</td>';
-    rowsHtml += '<td style="color:#666; font-size:11px;">' + item.date + '</td>';
-    rowsHtml += '<td><b style="color:#333; font-size:12px;">' + item.branch + '</b></td>';
-    rowsHtml += '<td style="font-weight:600; font-size:12px;">' + item.customer + '</td>';
-    rowsHtml += '<td style="font-weight:700; color:var(--blue); font-size:12px;">' + (item.phone || '-') + '</td>';
-    rowsHtml += '<td style="font-size:11px; color:#555; line-height:1.2;">' + (item.items || '').replace(/\n/g,'<br>') + '</td>';
+    rowsHtml += '<td style="color:#666; font-size:13px;">' + item.date + '</td>';
+    rowsHtml += '<td><b style="color:#333; font-size:14px;">' + item.branch + '</b></td>';
+    rowsHtml += '<td style="font-weight:600; font-size:14px;">' + item.customer + '</td>';
+    rowsHtml += '<td style="font-weight:700; color:var(--blue); font-size:14px;">' + (item.phone || '-') + '</td>';
+    rowsHtml += '<td style="font-size:13px; color:#555; line-height:1.3;">' + (item.items || '').replace(/\n/g,'<br>') + '</td>';
     rowsHtml += '<td align="center">';
     rowsHtml += '<div style="display:flex; gap:8px; justify-content:center; align-items:center;">';
     

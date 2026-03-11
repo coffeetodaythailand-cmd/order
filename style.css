@@ -239,7 +239,7 @@ body {
 .main-content {
   margin-left: 260px;
   background-color: #F8F9FA;
-  padding: 50px;
+  padding: 25px;
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* เพิ่มความสมูทให้เนื้อหาขยับตาม */
 }
@@ -363,7 +363,7 @@ body {
 .section-title {
   font-family: 'Prompt';
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
   margin: 0;
   display: flex;
   align-items: center;
@@ -552,7 +552,7 @@ body {
 }
 
 .receipt-value { 
-  font-size: 14px; 
+  font-size: 16px; 
   font-weight: 600; 
   color: #333333; 
 }
@@ -644,7 +644,7 @@ th {
   background-color: #F9FAFB; 
   text-align: left; 
   color: #6B7280; 
-  font-size: 11px; 
+  font-size: 13px; 
   text-transform: uppercase; 
   letter-spacing: 0.5px; 
   border-bottom: 2px solid #F3F4F6; 
@@ -653,7 +653,7 @@ th {
 td { 
   padding: 8px 10px; 
   border-bottom: 1px solid #F3F4F6; 
-  font-size: 12px; 
+  font-size: 14px; 
   vertical-align: middle; 
   transition: background 0.2s;
 }สัดส่วนการสั่งสินค้าแต่ละสาขา
@@ -1137,7 +1137,7 @@ td .fa-trash-alt:hover {
 .order-status-badge {
   padding: 3px 8px;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   display: inline-block;
   min-width: 60px;
@@ -1151,7 +1151,7 @@ td .fa-trash-alt:hover {
 /* ปุ่ม Action แบบกะทัดรัด */
 .action-btn-compact {
   padding: 3px 8px;
-  font-size: 10px;
+  font-size: 12px;
   border-radius: 6px;
   border: none;
   cursor: pointer;

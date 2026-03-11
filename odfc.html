@@ -408,6 +408,111 @@
       font-family: 'Prompt';
       display: inline-block;
     }
+
+    /* Styles for Search and Pagination */
+    #search-container {
+      display: none;
+      margin-bottom: 20px;
+      position: relative;
+      animation: slideDown 0.3s ease-out;
+    }
+    #search-container i {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      font-size: 18px;
+      transition: 0.3s;
+    }
+    #productSearchInput {
+      padding-left: 55px !important;
+      border-radius: 50px;
+      border: 1px solid #EEE;
+      background: #FFF;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      transition: all 0.3s;
+    }
+    #productSearchInput:focus {
+      border-color: var(--primary);
+      box-shadow: 0 4px 20px rgba(169, 29, 58, 0.15);
+      transform: translateY(-2px);
+    }
+
+    #view-controls {
+      display: none; /* Hidden by default, shown by JS */
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      margin-bottom: 25px;
+      background: #FFF;
+      border-radius: 20px;
+      border: 1px solid #F5F5F5;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      animation: fadeIn 0.4s;
+    }
+    .page-size-btn {
+      padding: 6px 14px;
+      border: 1px solid #F0F0F0;
+      background: #FAFAFA;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 0 3px;
+      font-weight: 600;
+      font-size: 12px;
+      color: #888;
+      transition: 0.3s;
+    }
+    .page-size-btn:hover {
+      background: #EEE;
+      color: #333;
+    }
+    .page-size-btn.active {
+      background: var(--primary);
+      color: #FFF;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(169, 29, 58, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    #pagination-nav {
+      background: #F8F9FA;
+      padding: 4px;
+      border-radius: 50px;
+      border: 1px solid #EEE;
+    }
+    
+    .page-nav-btn {
+      width: 30px; 
+      height: 30px; 
+      border: none; 
+      background: #FFF; 
+      border-radius: 50%; 
+      cursor: pointer; 
+      font-size: 12px; 
+      color: #666; 
+      transition: 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-nav-btn:hover:not(:disabled) { 
+      color: var(--primary); 
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .page-nav-btn:disabled { 
+      color: #DDD; 
+      cursor: not-allowed; 
+      background: transparent;
+      box-shadow: none;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -453,6 +558,27 @@
   <input type="text" id="cB" class="main-in" placeholder="ระบุชื่อสาขา">
   
   <div id="tabs" style="margin-bottom:20px; display:flex; flex-wrap:wrap;"></div>
+
+  <!-- Search Bar (Initially Hidden) -->
+  <div id="search-container">
+    <input type="text" id="productSearchInput" class="main-in" placeholder="ค้นหาสินค้าทั้งหมด..." style="margin-bottom:0; padding-left: 40px;">
+    <i class="fas fa-search"></i>
+  </div>
+
+  <!-- Pagination Controls (Initially Hidden) -->
+  <div id="view-controls">
+      <div>
+          <span style="font-size: 12px; font-weight: 600; color: #888; margin-right: 5px;">แสดง:</span>
+          <button class="page-size-btn active" onclick="setPageSize(this, 8)">8</button>
+          <button class="page-size-btn" onclick="setPageSize(this, 15)">15</button>
+          <button class="page-size-btn" onclick="setPageSize(this, 30)">30</button>
+      </div>
+      <div id="pagination-nav" style="display: flex; align-items: center;">
+          <button class="page-nav-btn" onclick="changePage(-1)"><i class="fas fa-chevron-left"></i></button>
+          <span id="page-info" style="font-size: 13px; font-weight: 600; color: #555; margin: 0 10px; width: 80px; text-align: center;"></span>
+          <button class="page-nav-btn" onclick="changePage(1)"><i class="fas fa-chevron-right"></i></button>
+      </div>
+  </div>
   
   <div id="loading-area" class="loading-container">
     <div class="spinner"></div>
@@ -494,6 +620,7 @@
       <button onclick="copyPhone('023756953')" class="copy-btn"><i class="far fa-copy"></i></button>
     </div>
   </div>
+  <button class="fab-btn" onclick="toggleSearchBar()" style="background: var(--dark);"><i class="fas fa-search" id="searchIcon"></i></button>
   <button class="fab-btn" onclick="toggleHelp()"><i class="fas fa-question-circle" id="helpIcon"></i></button>
 </div>
 
@@ -518,7 +645,10 @@
 </div>
 
 <script>
-  let pD = null, appData = null; 
+  let pD = null, appData = null, allProducts = [];
+  let currentPage = 1;
+  let itemsPerPage = 8;
+  let currentView = { type: 'category', value: '' }; // type: 'category' or 'search'
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwiFMRKwx__Gj2tTPgOsd4qe8BXKxgv78P7gMEsL9PejXbHkjRHFrO8kyOXahCbtt81/exec";
   const CACHE_KEY = "coffee_today_menu_cache";
 
@@ -534,69 +664,153 @@
     fetch(GAS_URL + "?action=getClientData&v=" + v)
       .then(res => res.json())
       .then(data => {
+          appData = data;
+          allProducts = [];
+          if (data.categories && data.products) {
+            data.categories.forEach(cat => {
+              if (data.products[cat]) {
+                data.products[cat].forEach(p => {
+                  allProducts.push({ ...p, category: cat });
+                });
+              }
+            });
+          }
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
           buildProductUI(data);
-          appData = data;
           document.getElementById('loading-area').style.display = 'none';
       })
       .catch(err => {
           console.error(err);
+          showError("ไม่สามารถโหลดเมนูได้");
           document.getElementById('loading-area').style.display = 'none';
       });
   };
 
   function buildProductUI(initData) {
-    const t = document.getElementById('tabs'), l = document.getElementById('lists');
-    t.innerHTML = ""; l.innerHTML = "";
-    
-    let isFirstRender = true; // 🎯 กันบั๊กแท็บไม่โชว์ถ้าหมวดแรกถูกซ่อน
+    const t = document.getElementById('tabs');
+    t.innerHTML = "";
 
-    initData.categories.forEach((c, i) => {
-      // 🕵️‍♂️ กรองหมวดหมู่: หน้าปกติ (ถ้าเป็น locked ให้ข้ามเลย)
-      const displayTag = (initData.categorySettings && initData.categorySettings[c]) ? initData.categorySettings[c] : 'both';
-      if (displayTag === 'locked') return;
+    let isFirstRender = true;
+    if (initData.categories) {
+      initData.categories.forEach((c, i) => {
+        const displayTag = (initData.categorySettings && initData.categorySettings[c]) ? initData.categorySettings[c] : 'both';
+        if (displayTag === 'locked') return;
 
-      const b = document.createElement('button'); 
-      b.className = `tab-btn tbtn ${isFirstRender ? 'active' : ''}`; 
-      b.innerText = c;
-      b.onclick = () => { 
-        document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); 
-        document.querySelectorAll('.table-section').forEach(s=>s.classList.remove('active')); 
-        document.getElementById(`s-${i}`).classList.add('active'); 
-      };
-      t.appendChild(b);
-
-      const s = document.createElement('div'); 
-      s.id = `s-${i}`; 
-      s.className = `table-section ${isFirstRender ? 'active' : ''}`;
-      
-      isFirstRender = false; // ปิดสถานะแท็บแรก
-
-      let h = `<table width="100%"><thead><tr><th>สินค้า</th><th width="100">คงเหลือ</th><th width="75">สั่ง</th></tr></thead><tbody>`;
-      initData.products[c].forEach(p => { 
-        if (p.status === 'Inactive') return;
-
-        const isSoldOut = (p.status === 'SoldOut');
-        const rowClass = isSoldOut ? 'sold-out-row' : '';
-        const inputAttr = isSoldOut ? 'disabled readonly' : '';
-        const badge = isSoldOut ? '<span class="badge-soldout">หมด</span>' : '';
-
-        h += `<tr class="${rowClass}">
-                <td style="padding-right:10px;">${p.name} ${badge}</td>
-                <td><input type="text" class="qty-in si" data-tab="${i}" placeholder="..." ${inputAttr}></td>
-                <td><input type="number" class="qty-in qi" data-n="${p.name}" placeholder="0" ${inputAttr}></td>
-              </tr>`;
+        const b = document.createElement('button');
+        b.className = `tab-btn tbtn ${isFirstRender ? 'active' : ''}`;
+        b.innerText = c;
+        b.dataset.categoryName = c;
+        b.onclick = () => {
+          document.getElementById('productSearchInput').value = '';
+          document.querySelectorAll('.tbtn').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          document.getElementById('sec-others').classList.remove('active');
+          currentView = { type: 'category', value: c };
+          currentPage = 1;
+          renderProducts();
+        };
+        t.appendChild(b);
+        if (isFirstRender) {
+          currentView.value = c;
+          isFirstRender = false;
+        }
       });
-      s.innerHTML = h + `</tbody></table>`; l.appendChild(s);
-    });
-    
+    }
+
     const oB = document.createElement('button'); oB.className='tab-btn tbtn'; oB.innerText='รายการอื่นๆ (พิมพ์ระบุ)';
-    oB.onclick = () => { 
-      document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active')); oB.classList.add('active'); 
-      document.querySelectorAll('.table-section').forEach(s=>s.classList.remove('active')); 
-      document.getElementById('sec-others').classList.add('active'); 
+    oB.onclick = () => {
+      document.querySelectorAll('.tbtn').forEach(x => x.classList.remove('active'));
+      oB.classList.add('active');
+      document.getElementById('view-controls').style.display = 'none';
+      document.getElementById('lists').innerHTML = '';
+      document.getElementById('sec-others').classList.add('active');
     };
-    t.appendChild(oB); addRow();
+    t.appendChild(oB);
+    addRow();
+
+    document.getElementById('productSearchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.trim();
+      currentView = { type: searchTerm ? 'search' : 'category', value: searchTerm || document.querySelector('.tab-btn.active').dataset.categoryName };
+      currentPage = 1;
+      renderProducts();
+    });
+
+    renderProducts();
+  }
+
+  function renderProducts() {
+    const listsContainer = document.getElementById('lists');
+    const controlsContainer = document.getElementById('view-controls');
+    const tabsContainer = document.getElementById('tabs');
+    listsContainer.innerHTML = '';
+    document.getElementById('sec-others').classList.remove('active');
+
+    let productsToRender = [];
+    let isSearchView = false;
+
+    if (currentView.type === 'search' && currentView.value) {
+      const searchTerm = currentView.value.toLowerCase();
+      productsToRender = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
+      isSearchView = true;
+      tabsContainer.style.display = 'none';
+    } else if (currentView.type === 'category' && appData.products[currentView.value]) {
+      productsToRender = appData.products[currentView.value].filter(p => p.status !== 'Inactive');
+      tabsContainer.style.display = 'flex';
+    }
+
+    if (productsToRender.length === 0) {
+      listsContainer.innerHTML = `<div class="loading-container" style="padding: 40px 0;"><i class="fas fa-box-open" style="font-size: 30px; margin-bottom: 15px;"></i> ไม่พบรายการสินค้า</div>`;
+      controlsContainer.style.display = 'none';
+      return;
+    }
+
+    controlsContainer.style.display = 'flex';
+
+    const totalPages = Math.ceil(productsToRender.length / itemsPerPage);
+    currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginatedItems = productsToRender.slice(start, end);
+
+    document.getElementById('page-info').innerText = `หน้า ${currentPage}/${totalPages}`;
+    document.querySelector('#pagination-nav button:first-of-type').disabled = (currentPage === 1);
+    document.querySelector('#pagination-nav button:last-of-type').disabled = (currentPage === totalPages);
+
+    let h = `<table width="100%"><thead><tr><th>สินค้า ${isSearchView ? '' : `(${paginatedItems.length})`}</th>${isSearchView ? '<th width="120">หมวดหมู่</th>' : ''}<th width="100">คงเหลือ</th><th width="75">สั่ง</th></tr></thead><tbody>`;
+    paginatedItems.forEach(p => {
+      const isSoldOut = (p.status === 'SoldOut');
+      const rowClass = isSoldOut ? 'sold-out-row' : '';
+      const inputAttr = isSoldOut ? 'disabled readonly' : '';
+      const badge = isSoldOut ? '<span class="badge-soldout">หมด</span>' : '';
+      const categoryCol = isSearchView ? `<td style="font-size:11px; color:#888;">${p.category}</td>` : '';
+
+      h += `<tr class="${rowClass}">
+              <td style="padding-right:10px;">${p.name} ${badge}</td>
+              ${categoryCol}
+              <td><input type="text" class="qty-in si" placeholder="..." ${inputAttr}></td>
+              <td><input type="number" class="qty-in qi" data-n="${p.name}" placeholder="0" ${inputAttr}></td>
+            </tr>`;
+    });
+    listsContainer.innerHTML = h + `</tbody></table>`;
+  }
+
+  function setPageSize(btn, size) {
+    itemsPerPage = size;
+    currentPage = 1;
+    document.querySelectorAll('.page-size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderProducts();
+  }
+
+  function changePage(direction) {
+    const newPage = currentPage + direction;
+    const products = (currentView.type === 'search') ? allProducts.filter(p => p.name.toLowerCase().includes(currentView.value.toLowerCase())) : appData.products[currentView.value];
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      currentPage = newPage;
+      renderProducts();
+    }
   }
 
   function addRow() {
@@ -605,10 +819,30 @@
     document.getElementById('custom-tbody').appendChild(d);
   }
 
+  function toggleSearchBar() {
+    const searchContainer = document.getElementById('search-container');
+    const searchIcon = document.getElementById('searchIcon');
+    const isHidden = searchContainer.style.display === 'none' || searchContainer.style.display === '';
+
+    document.getElementById('helpMenu').style.display = 'none';
+    document.getElementById('helpIcon').className = 'fas fa-question-circle';
+
+    searchContainer.style.display = isHidden ? 'block' : 'none';
+    searchIcon.className = isHidden ? 'fas fa-times' : 'fas fa-search';
+
+    if (isHidden) {
+      searchContainer.querySelector('input').focus();
+    } else {
+      document.getElementById('productSearchInput').value = '';
+      currentView = { type: 'category', value: document.querySelector('.tab-btn.active')?.dataset.categoryName || (appData.categories ? appData.categories[0] : '') };
+      renderProducts();
+    }
+  }
+
   function toggleHelp() {
     const menu = document.getElementById('helpMenu'), icon = document.getElementById('helpIcon');
     const isHidden = menu.style.display === 'none' || menu.style.display === '';
-    menu.style.display = isHidden ? 'block' : 'none';
+    menu.style.display = isHidden ? 'block' : 'none'; // No need to close search, it's not a modal
     icon.className = isHidden ? 'fas fa-times' : 'fas fa-question-circle';
   }
 
@@ -769,9 +1003,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
-
