@@ -199,9 +199,17 @@ function initApp(token) {
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const mainContent = document.querySelector('.main-content');
-  if (sidebar && mainContent) {
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('expanded');
+  const overlay = document.querySelector('.sidebar-overlay');
+
+  // 📱 Mobile Logic: ใช้ Class 'mobile-open' และเปิด Overlay
+  if (window.innerWidth <= 768) {
+    if (sidebar) sidebar.classList.toggle('mobile-open');
+    if (overlay) overlay.classList.toggle('active');
+  } 
+  // 💻 Desktop Logic: ใช้ Class 'collapsed' แบบเดิม
+  else {
+    if (sidebar) sidebar.classList.toggle('collapsed');
+    if (mainContent) mainContent.classList.toggle('expanded');
   }
 }
 
