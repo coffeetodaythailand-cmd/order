@@ -1,10 +1,4 @@
-# System Files
-.DS_Store
-Thumbs.db
-
-# VS Code Settings
-.vscode/
-
-# Logs
-*.log
-npm-debug.log
+# Documentation & Context Files
+project_notes.md
+coffeetoday_context.md
+changelog.md
