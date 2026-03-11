@@ -525,17 +525,36 @@
         text-align: center;
       }
       
+      /* 🛠️ Fix Table Layout (จัดระเบียบตารางมือถือ) */
+      table { table-layout: fixed; width: 100%; } /* บังคับโครงสร้างตาราง */
+      
+      /* กำหนดความกว้างและจัดกึ่งกลาง 2 ช่องหลัง (คงเหลือ, สั่ง) */
+      th:nth-last-child(1), td:nth-last-child(1) { width: 18%; text-align: center !important; }
+      th:nth-last-child(2), td:nth-last-child(2) { width: 18%; text-align: center !important; }
+      th:first-child, td:first-child { width: auto; } /* ชื่อสินค้าเอาพื้นที่ที่เหลือ */
+
       /* ปรับขนาดช่องกรอกในตารางให้เล็กลงหน่อยจะได้ไม่ล้น */
-      .qty-in { padding: 6px 2px; font-size: 12px; text-align: center; }
+      .qty-in { padding: 6px 0; font-size: 12px; text-align: center; width: 90% !important; margin: 0 auto; display: block; }
       
       /* ลดขนาดฟอนต์หัวตาราง */
-      th { font-size: 11px; }
+      th { font-size: 11px; overflow: hidden; white-space: nowrap; }
       
       /* ปรับปุ่มเลือกจำนวนต่อหน้า */
       .page-size-btn { padding: 6px 12px; font-size: 11px; margin: 0 2px; }
       
       /* ปรับระยะห่างระหว่างบรรทัดรายการสินค้า */
-      td { padding: 6px 0; font-size: 11px; line-height: 1.3; }
+      td { padding: 8px 2px; font-size: 11px; line-height: 1.3; }
+
+      /* 🚀 ย้ายปุ่มค้นหา/ช่วยเหลือ มาอยู่กึ่งกลางแนวตั้ง (ไม่บังด้านล่าง) */
+      .fab-container {
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 10px;
+        gap: 10px;
+      }
+      /* ย่อขนาดปุ่มลอยในมือถือลงนิดนึง */
+      .fab-btn { width: 45px; height: 45px; font-size: 18px; opacity: 0.9; }
     }
   </style>
 
