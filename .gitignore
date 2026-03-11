@@ -2,24 +2,9 @@
 .DS_Store
 Thumbs.db
 
-# VS Code Settings (Personal preferences)
+# VS Code Settings
 .vscode/
 
-# Logs & Temporary Files
+# Logs
 *.log
-tmp/
-temp/
-
-# Node modules (Future proofing)
-node_modules/
-
-# Environment Variables & Secrets
-.env
-
-# Build & Testing
-dist/
-coverage/
-
-# Documentation & AI Context (Local Only)
-project_notes.md
-coffeetoday_context.md
+npm-debug.log
