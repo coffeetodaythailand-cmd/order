@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div style="margin-bottom: 15px;">
+      <i class="fas fa-shield-alt"></i>
+    </div>
+    <div class="login-header">Database Unlocked</div>
+    <div class="login-sub">CoffeeToday Management System Terminal</div>
+    <form onsubmit="event.preventDefault(); handleLogin();">
+      <input 
+        type="password" 
+        id="passInput" 
+        class="login-input" 
+        placeholder="••••" 
+        maxlength="4"
+        autofocus
+      >
+      <button 
+        type="submit" 
+        id="loginBtn" 
+        class="btn btn-red" 
+        style="width:100%; padding:22px; font-size:18px; border-radius: 22px;"
+      >
+        <i class="fas fa-key"></i> UNLOCK SYSTEM
+      </button>
+    </form>
+  </div>
+</div>
+
+<div id="main-app">
+  
+  <!-- Sidebar Section -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <i class="fas fa-coffee" style="color:var(--red); font-size: 24px;"></i>
+        <span class="brand-name" style="font-family: 'Prompt'; font-weight: 600; font-size: 18px; letter-spacing: 0.5px;">CoffeeToday</span>
+      </div>
+      <button id="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li class="menu-item active" onclick="switchPage('dashboard')">
+        <i class="fas fa-chart-pie"></i>
+        <span>แผงควบคุม</span>
+      </li>
+      <li class="menu-item" onclick="switchPage('orders')">
+        <i class="fas fa-list-alt"></i>
+        <span>รายการออเดอร์</span>
+      </li>
+      <li class="menu-item" onclick="switchPage('menu')">
+        <i class="fas fa-sliders-h"></i>
+        <span>จัดการเมนู</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="status-indicator">
+        <div class="dot-pulse"></div>
+        <span id="syncText">System Live</span>
+      </div>
+      <div class="logout-btn" onclick="handleLogout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Section -->
+  <div class="main-content">
+    <div class="container">
+    
+      <!-- 1. Dashboard Section -->
+      <section id="dashboard-page" class="page-section">
+        <div class="section-header">
+          <h2 class="section-title">Dashboard Overview</h2>
+          <p style="color: #888; font-size: 14px;">ภาพรวมสถิติและการอนุมัติงาน</p>
+        </div>
+
+        <div class="card approve-card" id="approveCard" style="display:none; margin-bottom: 35px;">
+          <div class="section-header" style="margin-bottom: 15px;">
+            <h4 class="section-title" style="color: var(--green); font-size: 18px;">
+              <i class="fas fa-check-double"></i> อนุมัติการส่งมอบ (Approve Queue)
+            </h4>
+          </div>
+          <div id="approveList" class="approve-list" style="margin-bottom: 20px;"></div>
+          
+          <div class="pagination-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+            <div style="margin-right: auto; color: #999; font-size: 12px;">รายการรออนุมัติ</div>
+            <span style="font-size: 12px; color: #666;">แสดง:</span>
+            <select id="apRowSel" class="styled-select" onchange="apChangeLimit()" style="padding: 5px 8px; font-size: 12px; border-radius: 8px;">
+              <option value="5">5 รายการ</option>
+              <option value="15">15 รายการ</option>
+              <option value="30">30 รายการ</option>
+            </select>
+            <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apPrev()"><i class="fas fa-chevron-left"></i></button> 
+            <span id="apPI" style="font-weight:600; min-width:45px; text-align:center; font-size: 13px; font-family: 'Prompt';">1 / 1</span> 
+            <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apNext()"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card" id="mainChartCard">
+            <div class="section-header" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+              <h4 class="section-title"><i class="fas fa-chart-line" style="color:var(--red);"></i> สินค้าขายดี 10 อันดับ</h4>
+              <div class="filter-panel" style="width: 100%; flex-direction: column; align-items: stretch; gap: 10px;">
+                <div class="custom-date-group" style="justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 10px;">
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer;">
+                      <i class="fas fa-calendar-alt"></i>
+                      <input type="date" id="sDate" class="filter-input" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
+                    </div>
+                    <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer;">
+                      <i class="fas fa-calendar-alt"></i>
+                      <input type="date" id="eDate" class="filter-input" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
+                    </div>
+                  </div>
+                  <button class="btn btn-red btn-sm" onclick="applyDateFilter()" style="width: 80px; justify-content: center; padding: 0 5px; height: 32px; border-radius: 10px; font-size: 12px;"><i class="fas fa-filter"></i> กรอง</button>
+                </div>
+                <div class="quick-filter-group" style="justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 10px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="quick-filter-btn" onclick="setQuickDateFilter(0, this)">วันนี้</button>
+                    <button class="quick-filter-btn" onclick="setQuickDateFilter(3, this)">3 วัน</button>
+                    <button class="quick-filter-btn" onclick="setQuickDateFilter(7, this)">7 วัน</button>
+                    <button class="quick-filter-btn" onclick="setQuickDateFilter(15, this)">15 วัน</button>
+                    <button class="quick-filter-btn" onclick="setQuickDateFilter(30, this)">30 วัน</button>
+                  </div>
+                  <button id="summaryBtn" class="btn btn-blue btn-sm" onclick="downloadSummaryReport()" style="width: 80px; justify-content: center; padding: 0 5px; height: 32px; border-radius: 10px; font-size: 12px;"><i class="fas fa-file-invoice"></i> รายงาน</button>
+                </div>
+              </div>
+            </div>
+            <div style="height:280px; position: relative;">
+              <canvas id="bC"></canvas>
+            </div>
+          </div>
+          
+          <div class="card" id="doughnutCard">
+            <h4 class="section-title" style="margin-bottom: 20px;">
+              <i class="fas fa-pie-chart"></i> สัดส่วนการสั่งสินค้าแต่ละสาขา
+            </h4>
+            <div class="chart-container" style="position: relative; height:300px; width:100%;">
+              <canvas id="pC_Chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="stockChartCard" style="margin-top: 35px;">
+          <div class="section-header">
+            <h4 class="section-title" style="color: var(--orange);">
+              <i class="fas fa-boxes-stacked"></i> วิเคราะห์สต๊อกสินค้า (ใกล้หมด)
+            </h4>
+          </div>
+          <p style="font-size:12px; color:#999999; margin-top:-20px; margin-bottom:25px;">
+            * แสดงรายการที่เหลือน้อยที่สุด 15 อันดับแรกจากการแจ้งงานล่าสุดแยกตามสาขา
+          </p>
+          <div style="height:280px; position: relative;">
+            <canvas id="sC"></canvas>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 2. Order Section -->
+      <section id="orders-page" class="page-section">
+        <div class="section-header">
+          <h2 class="section-title">Order History</h2>
+          <p style="color: #888; font-size: 14px;">ประวัติและสถานะออเดอร์ทั้งหมด</p>
+        </div>
+
+        <div class="search-row" style="margin-bottom: 25px;">
+          <div style="flex:1; display:flex; align-items:center; gap:12px;">
+            <i class="fas fa-search" style="color:#BBBBBB; font-size:15px;"></i>
+            <input 
+              type="text" 
+              id="orderSearch" 
+              class="search-input" 
+              placeholder="พิมพ์ชื่อ, เลขบิล (เช่น 1), สาขา, เบอร์โทร..." 
+              oninput="pgNum=1; renderTable();"
+            >
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button 
+              id="deepSearchBtn" 
+              class="btn" 
+              style="background-color:var(--dark); color:white; padding:8px 15px; font-size:11px; border-radius:12px; white-space:nowrap; border:none; cursor:pointer;" 
+              onclick="executeDeepSearch()"
+            >
+              <i class="fas fa-magnifying-glass-plus"></i> ค้นหาลึก
+            </button>
+            <button 
+              id="clearSearchBtn" 
+              class="btn" 
+              style="display:none; background-color:#EEEEEE; color:#333333; padding:8px 15px; font-size:11px; border-radius:12px; white-space:nowrap; border:none; cursor:pointer;" 
+              onclick="clearDeepSearch()"
+            >
+              <i class="fas fa-rotate-left"></i> ล้าง
+            </button>
+          </div>
+        </div>
+
+        <div class="card" id="tableCard">
+          <div class="section-header">
+            <h3 class="section-title" style="font-size:20px;"><i class="fas fa-clock-rotate-left"></i> รายการล่าสุด</h3>
+            <div id="lastUpd" style="font-size:12px; color:#AAAAAA;">Update: -</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table id="oT">
+              <thead>
+                <tr>
+                  <th style="width: 110px;">Order ID</th>
+                  <th style="width: 130px;">วัน/เวลา</th>
+                  <th style="width: 15%;">ชื่อสาขา</th>
+                  <th style="width: 15%;">ลูกค้า</th>
+                  <th style="width: 12%;">เบอร์โทร</th>
+                  <th>รายการสินค้า</th>
+                  <th align="center" style="width: 130px;">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="oB">
+                </tbody>
+            </table>
+          </div>
+          
+          <div class="pagination-footer">
+            <div style="margin-right: auto; color: #999; font-size: 13px;">
+              แสดงข้อมูลออเดอร์ในระบบ
+            </div>
+            <span style="font-size: 13px; color: #666;">Rows per page:</span>
+            <select id="rowSel" class="styled-select" onchange="changeLimit()">
+              <option value="8">8 รายการ</option>
+              <option value="15">15 รายการ</option>
+              <option value="30">30 รายการ</option>
+              <option value="50">50 รายการ</option>
+            </select>
+            <button class="page-btn" onclick="prev()"><i class="fas fa-chevron-left"></i></button> 
+            <span id="pI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
+            <button class="page-btn" onclick="next()"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Menu Section -->
+      <section id="menu-page" class="page-section">
+        <div class="section-header">
+          <h2 class="section-title">Menu Management</h2>
+          <p style="color: #888; font-size: 14px;">จัดการหมวดหมู่และรายการสินค้า</p>
+        </div>
+
+        <div class="section-header" style="margin-top: 20px; margin-bottom: 20px;">
+          <h2 class="section-title" style="font-size: 20px;"><i class="fas fa-sliders"></i> เครื่องมือจัดการ</h2>
+          <div style="display:flex; gap:12px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
+        <button id="saveOrderBtn" class="btn btn-orange btn-sm" onclick="saveMenuOrder()">
+              <i class="fas fa-save"></i> บันทึกลำดับ
+            </button>
+        <button class="btn btn-dark btn-sm" onclick="openCatModal()">
+              <i class="fas fa-folder-plus"></i> เพิ่มหมวดหมู่
+            </button>
+            <button class="btn btn-red btn-sm" onclick="openProdModal()">
+              <i class="fas fa-plus-circle"></i> เพิ่มสินค้าใหม่
+            </button>
+            <div class="menu-search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="menuSearchInput" oninput="handleMenuSearch(this.value)" placeholder="ค้นหาสินค้า...">
+            </div>
+          </div>
+        </div>
+
+        <div id="catChips" class="chips-container"></div>
+        
+        <div id="menuItems" class="card" style="padding: 15px 40px; min-height: 120px; border-top: 6px solid var(--red);">
+          <div style="text-align:center; padding:40px; color:#CCC;">กรุณาเลือกหมวดหมู่...</div>
+        </div>
+
+        <!-- 🚀 Pagination for Menu Items -->
+        <div id="menuPagination" class="pagination-footer" style="display: none; margin-top: -15px; border-top: none; padding: 0 20px 20px 20px; background: white; border-radius: 0 0 var(--card-radius) var(--card-radius); box-shadow: var(--shadow-soft);">
+          <div style="margin-right: auto; color: #999; font-size: 13px;">
+            แสดงรายการสินค้า
+          </div>
+          <span style="font-size: 13px; color: #666;">แสดง:</span>
+          <select id="menuRowSel" class="styled-select" onchange="menuChangeLimit()">
+            <option value="10" selected>10 รายการ</option>
+            <option value="15">15 รายการ</option>
+            <option value="20">20 รายการ</option>
+            <option value="999">ทั้งหมด</option>
+          </select>
+          <button class="page-btn" onclick="menuPrev()"><i class="fas fa-chevron-left"></i></button> 
+          <span id="menuPI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
+          <button class="page-btn" onclick="menuNext()"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div id="receiptModal" class="overlay">
+  <div class="receipt-card">
+    <div id="pdf-content">
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2 style="margin:0; font-family:'Prompt'; color:var(--red); letter-spacing:2px; font-weight:bold;">OFFICIAL RECEIPT</h2>
+        <div style="height:2px; background:#A91D3A; width:50px; margin:10px auto;"></div>
+      </div>
+      <div id="receiptBody"></div>
+      <div style="margin-top: 40px; text-align: center; border-top: 1px dashed #cccccc; padding-top: 20px; font-size: 11px; color: #999999;">
+        <p style="margin: 5px 0;">เอกสารตรวจสอบการจัดเตรียมพัสดุ</p>
+        <p style="margin: 5px 0;">วันที่พิมพ์เอกสาร: <span id="printDate"></span></p>
+        <p style="margin: 5px 0; font-weight: bold; color: #666;">© CoffeeToday Shop System </p>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 30px;">
+      <button id="dlBtn" class="btn" style="background-color:var(--green); color:white; padding:18px;" onclick="downloadPDF()">
+        <i class="fas fa-file-pdf"></i> ดาวน์โหลดเป็นไฟล์ PDF
+      </button>
+      <button class="btn btn-red" style="padding:15px;" onclick="closeM('receiptModal')">
+        <i class="fas fa-times"></i> ปิดหน้าต่างนี้
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 420px;">
+    <div style="margin-bottom: 25px;">
+      <i class="fas fa-circle-check" style="font-size: 75px; color: var(--green); filter: drop-shadow(0 5px 15px rgba(34,197,94,0.3));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">อนุมัติการส่งมอบ</h2>
+    <p style="color: #777777; margin: 20px 0 35px; font-size: 15px; line-height: 1.6;">
+      คุณกำลังจะอนุมัติให้สถานะออเดอร์ <br><b id="confirmOrderId" style="color: var(--red); font-size: 22px;"></b><br> เป็น "จัดส่งสำเร็จ" ใช่หรือไม่?
+    </p>
+    <div style="display: flex; gap: 15px;">
+      <button class="btn" style="flex: 1; background-color: #F5F5F5; color: #333333;" onclick="closeM('confirmModal')">ยกเลิก</button>
+      <button class="btn" style="flex: 1; background-color: var(--green); color: white;" onclick="executeApproveOrder()">ยืนยันอนุมัติ</button>
+    </div>
+  </div>
+</div>
+
+<div id="cM" class="overlay">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <h3 style="margin:0; font-family:'Prompt';">สร้างหมวดหมู่ใหม่</h3>
+      <i class="fas fa-folder-open" style="color:var(--red); font-size:20px;"></i>
+    </div>
+    <label style="font-size:12px; color:#999; margin-bottom:8px; display:block;">ชื่อหมวดหมู่สินค้า</label>
+    <input type="text" id="cN" class="login-input" style="font-size:18px; text-align:left; padding:15px 25px;" placeholder="ระบุชื่อหมวดหมู่ เช่น กาแฟ TD...">
+    <div style="display:flex; gap:15px; margin-top:10px;">
+      <button class="btn" style="flex:1; background-color:#F5F5F5;" onclick="closeM('cM')">กลับ</button>
+      <button class="btn btn-red" style="flex:1;" onclick="saveCat()">บันทึกข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<div id="pM" class="overlay">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <h3 style="margin:0; font-family:'Prompt';">ข้อมูลรายการสินค้า</h3>
+      <i class="fas fa-tag" style="color:var(--red); font-size:20px;"></i>
+    </div>
+    
+    <div style="margin-bottom:20px;">
+      <label style="font-size:11px; color:#AAAAAA; text-transform:uppercase; font-weight:bold;">หมวดหมู่หลัก</label>
+      <select id="pCatSelect" class="login-input" style="font-size:16px; margin-top:8px; padding:15px; text-align:left;"></select>
+    </div>
+    
+    <div style="margin-bottom:30px;">
+      <label style="font-size:11px; color:#AAAAAA; text-transform:uppercase; font-weight:bold;">ชื่อสินค้า / ขนาดบรรจุ</label>
+      <input type="text" id="pN" class="login-input" style="font-size:16px; margin-top:8px; padding:15px; text-align:left;" placeholder="เช่น กาแฟ TD-1 (250g)">
+    </div>
+    
+    <div style="display:flex; gap:15px;">
+      <button class="btn" style="flex:1; background-color:#F5F5F5;" onclick="closeM('pM')">ยกเลิก</button>
+      <button class="btn btn-red" style="flex:1;" onclick="saveP()">บันทึกรายการ</button>
+    </div>
+  </div>
+</div>
+
+<div id="editCatModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 420px; border-top: 15px solid var(--blue);">
+    <div style="margin-bottom: 25px;">
+      <i class="fas fa-edit" style="font-size: 75px; color: var(--blue); filter: drop-shadow(0 5px 15px rgba(52,152,219,0.3));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">แก้ไขชื่อหมวดหมู่</h2>
+    
+    <p style="color: #777; margin: 15px 0 5px; font-size: 14px;">พิมพ์ชื่อใหม่ที่ต้องการเปลี่ยน</p>
+    <input type="text" id="editCatInput" class="login-input" style="font-size:22px; text-align:center; padding:15px; margin-bottom: 20px; border-color: var(--blue);">
+    
+    <p style="color: #777; margin: 10px 0 10px; font-size: 14px; font-weight: bold;">แสดงผลที่หน้าสั่งสินค้า:</p>
+    <div class="display-options-group" style="margin-bottom: 25px;">
+      <input type="radio" id="cat_normal" name="catDisplay" value="normal">
+      <label for="cat_normal">หน้าปกติ</label>
+      
+      <input type="radio" id="cat_locked" name="catDisplay" value="locked">
+      <label for="cat_locked">หน้าล็อคสต็อก</label>
+      
+      <input type="radio" id="cat_both" name="catDisplay" value="both" checked>
+      <label for="cat_both">ทั้งคู่</label>
+    </div>
+
+    <div style="display: flex; gap: 15px;">
+      <button class="btn" style="flex: 1; background-color: #F5F5F5; color: #333;" onclick="closeM('editCatModal')">ยกเลิก</button>
+      <button class="btn" style="flex: 1.5; background-color: var(--blue); color: white;" onclick="executeEditCategory()">บันทึกการแก้ไข</button>
+    </div>
+  </div>
+</div>
+  <div id="managerConfirmModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 440px; border-top: 15px solid var(--green);">
+    <div style="margin-bottom: 25px;">
+      <i class="fas fa-check-circle" style="font-size: 80px; color: var(--green); filter: drop-shadow(0 10px 20px rgba(34,197,94,0.25));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">บอสยืนยันปิดงานใช่ไหม?</h2>
+    <p style="color: #666; margin: 15px 0 35px; font-size: 14px; line-height: 1.6;">
+       เลขออเดอร์ <b id="managerConfirmId" style="color:var(--red); font-size:18px;"></b><br>
+       หากกดยืนยัน กราฟแจ้งเตือนสาขานี้จะหายไปทันทีครับ
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button class="btn" style="flex: 1; background-color: #f3f4f6; color: #444; border-radius: 15px;" onclick="closeM('managerConfirmModal')">ไว้ก่อน</button>
+      <button id="managerExecBtn" class="btn" style="flex: 1.5; background-color: var(--green); color: white; border-radius: 15px; box-shadow: 0 8px 20px rgba(34,197,94,0.3);" onclick="executeManagerClose()">ยืนยันปิดงานเลย!</button>
+    </div>
+  </div> </div>
+
+<div id="delConfirmModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 400px; border-top: 15px solid var(--red);">
+    <div style="margin-bottom: 20px;">
+      <i class="fas fa-trash-alt" style="font-size: 70px; color: var(--red); filter: drop-shadow(0 5px 15px rgba(169,29,58,0.3));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">ยืนยันการลบ</h2>
+    <p id="delMsg" style="color: #666; margin: 15px 0 30px; font-size: 14px; line-height: 1.6;"></p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button class="btn" style="flex: 1; background-color: #f3f4f6; color: #444; border-radius: 15px;" onclick="closeM('delConfirmModal')">ยกเลิก</button>
+      <button id="confirmDelBtn" class="btn btn-red" style="flex: 1.5; border-radius: 15px; box-shadow: 0 8px 20px rgba(169,29,58,0.3);">ยืนยันลบถาวร</button>
+    </div>
+  </div>
+</div>
+
+<div id="systemAlertModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 400px; border-top: 15px solid var(--orange);">
+    <div style="margin-bottom: 20px;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 70px; color: var(--orange); filter: drop-shadow(0 5px 15px rgba(243,156,18,0.3));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">แจ้งเตือน</h2>
+    <p id="systemAlertMsg" style="color: #666; margin: 15px 0 30px; font-size: 14px; line-height: 1.6;"></p>
+    <div style="display: flex; justify-content: center;">
+      <button class="btn" style="background-color: var(--dark); color: white; padding: 12px 40px; border-radius: 15px;" onclick="closeM('systemAlertModal')">ตกลง</button>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    /*
+     * CoffeeToday System - Stock & Packing Station UI
+     * โดย คุณเบลล์ (Khun Bell)
+     * การจัดวางโครงสร้าง CSS แบบเต็มพิกัด 
+     */
+     
+    :root { 
+      --primary: #A91D3A; 
+      --dark: #2D3133; 
+      --bg: #F3F4F6; 
+      --card-bg: #FFFFFF; 
+      --green: #22c55e;
+      --blue: #3498db;
+    }
+    
+    body { 
+      font-family: 'Sarabun', sans-serif; 
+      background: var(--bg); 
+      margin: 0; 
+      padding-bottom: 50px; 
+    }
+    
+    #login-overlay { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+      z-index: 9999; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    
+    .login-box { 
+      background: rgba(255, 255, 255, 0.9); 
+      backdrop-filter: blur(15px);
+      padding: 60px 40px; 
+      border-radius: 40px; 
+      width: 90%; 
+      max-width: 420px; 
+      text-align: center; 
+      border: 1px solid rgba(255,255,255,0.3); 
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
+    }
+    
+    .login-input { 
+      width: 100%; 
+      padding: 22px; 
+      border: 2px solid #EEE; 
+      border-radius: 20px; 
+      margin-bottom: 30px; 
+      text-align: center; 
+      font-size: 28px; 
+      outline: none; 
+      box-sizing: border-box; 
+    }
+    
+    #main-app { 
+      display: none; 
+    }
+
+    .nav { 
+      background: var(--card-bg); 
+      padding: 10px 20px; 
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+    }
+    
+    .brand { 
+      font-family: 'Prompt'; 
+      font-weight: 600; 
+      font-size: 16px; 
+      color: var(--dark); 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    
+    .container { 
+      max-width: 600px; 
+      margin: 15px auto; 
+      padding: 0 15px; 
+    }
+
+    /* ✅ แก้ไข CSS ช่องค้นหาให้มีปุ่ม Deep Search ซ่อนอยู่ */
+    .search-box {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      border: 1px solid #EEE;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    
+    .search-input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-family: 'Prompt';
+      font-size: 14px;
+      color: var(--dark);
+    }
+    
+    .btn-search-action {
+      background: var(--dark);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Prompt';
+    }
+    
+    .btn-search-clear {
+      background: #EEE;
+      color: #333;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Prompt';
+      display: none;
+    }
+    
+    .task-card { 
+      background: var(--card-bg); 
+      border-radius: 15px; 
+      padding: 15px; 
+      margin-bottom: 15px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
+      border-left: 6px solid var(--primary); 
+      transition: all 0.3s; 
+      position: relative; 
+      animation: slideIn 0.4s ease-out;
+    }
+    
+    .task-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      margin-bottom: 10px; 
+      border-bottom: 1px solid #F0F0F0; 
+      padding-bottom: 8px; 
+    }
+    
+    .order-id { 
+      font-family: 'Prompt'; 
+      font-weight: bold; 
+      font-size: 18px; 
+      color: var(--primary); 
+    }
+    
+    .task-time { 
+      font-size: 11px; 
+      color: #666; 
+      background: #F8F9FA; 
+      padding: 4px 8px; 
+      border-radius: 50px; 
+      font-weight: 600;
+      border: 1px solid #EEE;
+    }
+    
+    .badge-container { 
+      display: flex; 
+      gap: 5px; 
+      margin-top: 5px; 
+      flex-wrap: wrap; 
+    }
+    
+    .branch-badge { 
+      background: var(--dark); 
+      color: #FFF; 
+      padding: 3px 10px; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      font-weight: 500; 
+    }
+    
+    .phone-badge { 
+      background: var(--blue); 
+      color: #FFF; 
+      padding: 3px 10px; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      text-decoration: none; 
+    }
+    
+    .item-checklist { 
+      background: #FFF5F7; 
+      padding: 12px; 
+      border-radius: 12px; 
+      border: 1px dashed #FFD1DC; 
+      margin-top: 10px; 
+    }
+    
+    .check-row { 
+      display: flex; 
+      align-items: center; 
+      padding: 8px; 
+      background: #FFF; 
+      border-radius: 10px; 
+      margin-bottom: 6px; 
+      cursor: pointer; 
+      transition: 0.2s; 
+      border: 1px solid transparent; 
+    }
+    
+    .check-row:hover { 
+      border-color: var(--primary); 
+    }
+    
+    .check-row input[type="checkbox"] { 
+      width: 18px; 
+      height: 18px; 
+      margin-right: 12px; 
+      accent-color: var(--primary); 
+    }
+    
+    .check-row span { 
+      font-family: 'Prompt'; 
+      font-size: 14px; 
+      color: #444; 
+    }
+    
+    .check-row.checked { 
+      background: #F9FAFB; 
+      opacity: 0.6; 
+    }
+    
+    .check-row.checked span { 
+      text-decoration: line-through; 
+    }
+    
+    .action-btn { 
+      width: 100%; 
+      margin-top: 15px; 
+      padding: 12px; 
+      border: none; 
+      border-radius: 12px; 
+      background: var(--primary); 
+      color: #FFF; 
+      font-family: 'Prompt'; 
+      font-size: 15px; 
+      font-weight: 600; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 10px; 
+      transition: 0.2s; 
+      cursor: pointer;
+    }
+    
+    .action-btn:disabled { 
+      background: #CCC; 
+      cursor: not-allowed; 
+    }
+    
+    .pagination-footer { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 10px; 
+      margin-top: 20px; 
+      font-size: 13px; 
+      padding: 15px; 
+      background: #FFF; 
+      border-radius: 15px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
+    }
+    
+    .page-btn { 
+      background: #F3F4F6; 
+      border: none; 
+      width: 35px; 
+      height: 35px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: 0.2s; 
+    }
+    
+    .page-btn:hover:not(:disabled) { 
+      background: var(--primary); 
+      color: white; 
+    }
+    
+    .styled-select { 
+      background: #FFF; 
+      border: 1px solid #DDD; 
+      padding: 5px 10px; 
+      border-radius: 8px; 
+      font-family: 'Prompt'; 
+      outline: none; 
+      cursor: pointer; 
+      font-size: 12px; 
+    }
+
+    .empty-state { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: #AAA; 
+    }
+    
+    @keyframes slideIn { 
+      from { opacity: 0; transform: translateY(20px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    @keyframes blink { 
+      50% { opacity: 0.5; } 
+    }
+
+    .overlay {
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0; 
+      top: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0,0,0,0.7); 
+      backdrop-filter: blur(8px); 
+      align-items: center; 
+      justify-content: center; 
+    }
+
+    .modal-card {
+      background: #FFF; 
+      padding: 40px; 
+      border-radius: 30px;
+      width: 90%; 
+      max-width: 400px; 
+      text-align: center;
+      border-top: 10px solid var(--primary); 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    /* แจ้งเตือนสถานะสำเร็จของบิล (UI ใหม่) */
+    .success-badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <i class="fas fa-tasks" style="font-size:60px; color:var(--primary); margin-bottom:20px;"></i>
+    <h2 style="margin-bottom:10px; font-family:'Prompt'; font-weight: 600; color: #333;">KDS Access</h2>
+    <p style="color: #666; margin-bottom: 40px;">ระบุรหัสผ่านเพื่อเข้าสู่จอครัว</p>
+    <form onsubmit="event.preventDefault(); handleLogin();">
+      <input type="password" id="passInput" class="login-input" placeholder="••••" autofocus>
+      <button type="submit" id="loginBtn" class="action-btn" style="padding:22px; font-size:20px;">ยืนยันรหัสผ่าน</button>
+    </form>
+  </div>
+</div>
+
+<div id="main-app">
+  
+  <div class="nav">
+    <div class="brand">
+      <i class="fas fa-tasks" style="color:var(--primary);"></i> 
+      ตรวจสอบ & แพ็กออเดอร์
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-size:11px; color:var(--green); font-weight:600; background:#E8F5E9; padding:5px 12px; border-radius:50px; display:flex; align-items:center; gap:6px;">
+        <div style="width:6px; height:6px; background:var(--green); border-radius:50%; animation: blink 1.5s infinite;"></div>
+        Sync (3 นาที)
+      </div>
+      <button onclick="handleLogout()" style="background:none; border:none; color:#AAA; cursor:pointer;"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <div class="container">
+    
+    <div class="search-box">
+      <i class="fas fa-search" style="color:#BBB; font-size:14px;"></i>
+      <input type="text" id="sQuery" class="search-input" placeholder="พิมพ์ชื่อ, เลขบิล หรือเบอร์โทร..." oninput="currentPage=1; renderTasks();">
+      <button id="deepSearchBtn" class="btn-search-action" onclick="executeDeepSearch()">ค้นหาลึก</button>
+      <button id="clearSearchBtn" class="btn-search-clear" onclick="clearDeepSearch()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div id="taskList">
+      <div style="text-align:center; padding:50px; color:#AAA;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:30px;"></i>
+        <p>Loading Data...</p>
+      </div>
+    </div>
+
+    <div class="pagination-footer">
+      <select id="pgLimit" class="styled-select" onchange="changePageLimit()">
+        <option value="5"> 5 แถว</option>
+        <option value="10"> 10 แถว</option>
+        <option value="15"> 15 แถว</option>
+      </select>
+      <button class="page-btn" onclick="prevPage()" id="prevBtn"><i class="fas fa-chevron-left"></i></button> 
+      <span id="pageInfo" style="font-weight:600; min-width:60px; text-align:center;">หน้า 1 / 1</span> 
+      <button class="page-btn" onclick="nextPage()" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    
+  </div>
+</div>
+
+<div id="confirmStockModal" class="overlay">
+  <div class="modal-card">
+    <i class="fas fa-box-open" style="font-size: 60px; color: var(--primary); margin-bottom: 20px;"></i>
+    <h2 style="margin-top: 0; font-family: 'Prompt'; color: var(--dark);">ยืนยันแพ็คของเสร็จสิ้น</h2>
+    <p style="color: #666; margin-bottom: 30px; font-size: 15px;">
+      ออเดอร์ <b id="confirmStockId" style="color: var(--primary); font-size: 18px;"></b><br> ถูกจัดเตรียมครบถ้วนแล้วใช่หรือไม่?
+    </p>
+    <div style="display: flex; gap: 15px;">
+      <button class="action-btn" style="background: #F5F5F5; color: #333; margin-top: 0;" onclick="closeM('confirmStockModal')">ยกเลิก</button>
+      <button class="action-btn" style="background: var(--primary); color: white; margin-top: 0;" onclick="executeMarkPacked()">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * ⚙️ Stock Station - Logic Engine (Full Expansion)
+   * เวอร์ชั่น: High-Speed Client Search + Server Deep Search
+   */
+  
+  let tasks = [];
+  let currentPage = 1;
+  let pageLimit = 5;
+  let pendingStockId = "";
+  
+  // ตัวแปรสำหรับเก็บสถานะการค้นหาลึก
+  let activeDeepSearch = "";
+  
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwiFMRKwx__Gj2tTPgOsd4qe8BXKxgv78P7gMEsL9PejXbHkjRHFrO8kyOXahCbtt81/exec";
+  const TOKEN_KEY = "coffee_today_admin_token";
+
+  window.onload = function() {
+    
+    const savedToken = localStorage.getItem(TOKEN_KEY);
+    
+    if (savedToken) {
+      
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      
+      refreshTasks(savedToken);
+      
+      // Auto Refresh ทุกๆ 3 นาที
+      setInterval(function() {
+        
+        // ถ้ายุ่งอยู่กับการค้นหาลึก ให้ข้ามการโหลดบิล Pending ไปก่อน
+        if (activeDeepSearch !== "") {
+          return;
+        }
+        
+        refreshTasks(localStorage.getItem(TOKEN_KEY));
+        
+      }, 180000);
+      
+    }
+  };
+
+  /** ✅ Login Handler */
+  function handleLogin() { 
+    
+    const lBtn = document.getElementById('loginBtn');
+    const pInput = document.getElementById('passInput');
+    
+    lBtn.disabled = true; 
+    lBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+    fetch(GAS_URL + '?action=verifyLogin&pass=' + pInput.value + '&role=stock')
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(res) {
+        
+        if(res.status === 'success') {
+          
+          localStorage.setItem(TOKEN_KEY, res.token);
+          location.reload();
+          
+        } else {
+          
+          alert(res.message);
+          lBtn.disabled = false; 
+          lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
+          pInput.value = ''; 
+          pInput.focus();
+          
+        }
+      })
+      .catch(function(err) {
+        alert("Server connection failed.");
+        lBtn.disabled = false; 
+        lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
+      });
+  }
+
+  function handleLogout() { 
+    localStorage.removeItem(TOKEN_KEY); 
+    location.reload(); 
+  }
+
+  /** ✅ โหลดคิวงาน Pending (โหมดปกติ) */
+  function refreshTasks(token) {
+    
+    const t = token || localStorage.getItem(TOKEN_KEY);
+    const v = new Date().getTime(); // 🚀 Cache Buster
+    
+    // ดึงเฉพาะบิล Pending
+    fetch(GAS_URL + '?action=getOrdersByStatus&status=Pending&token=' + t + '&v=' + v)
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(newData) {
+        
+        tasks = newData;
+        renderTasks();
+        
+      })
+      .catch(function(err) {
+        console.error("Refresh Error:", err);
+      });
+  }
+
+  /** * ✅ NEW: ระบบค้นหาทะลุมิติ (Deep Search Engine) 
+   * ค้นหาบิลเก่าๆ ที่แพ็คเสร็จไปแล้วกลับมาดูได้
+   */
+  function executeDeepSearch() {
+    
+    const input = document.getElementById('sQuery');
+    const queryVal = input.value.trim();
+    
+    if (queryVal === "") {
+      alert("กรุณาพิมพ์สิ่งที่ต้องการค้นหาก่อนครับ");
+      return;
+    }
+    
+    const btnSearch = document.getElementById('deepSearchBtn');
+    btnSearch.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btnSearch.disabled = true;
+    
+    activeDeepSearch = queryVal;
+    
+    const token = localStorage.getItem(TOKEN_KEY);
+    const searchUrl = GAS_URL + '?action=getOrdersByStatus&status=Pending&q=' + encodeURIComponent(queryVal) + '&token=' + token;
+    
+    fetch(searchUrl)
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(foundData) {
+        
+        tasks = foundData;
+        currentPage = 1;
+        renderTasks();
+        
+        // สลับปุ่มค้นหากับปุ่มล้าง
+        btnSearch.style.display = "none";
+        document.getElementById('clearSearchBtn').style.display = "inline-flex";
+        
+        btnSearch.innerHTML = 'ค้นหาลึก';
+        btnSearch.disabled = false;
+        
+      })
+      .catch(function(err) {
+        alert("การค้นหาล้มเหลว กรุณาลองใหม่");
+        btnSearch.innerHTML = 'ค้นหาลึก';
+        btnSearch.disabled = false;
+      });
+  }
+
+  /** ✅ ล้างการค้นหาลึก กลับสู่โหมดบิลใหม่ */
+  function clearDeepSearch() {
+    
+    document.getElementById('sQuery').value = "";
+    activeDeepSearch = "";
+    
+    document.getElementById('deepSearchBtn').style.display = "inline-flex";
+    document.getElementById('clearSearchBtn').style.display = "none";
+    
+    const container = document.getElementById('taskList');
+    container.innerHTML = '<div style="text-align:center; padding:50px; color:#AAA;"><i class="fas fa-circle-notch fa-spin" style="font-size:30px;"></i><p>กำลังรีเฟรชคิวงาน...</p></div>';
+    
+    refreshTasks();
+  }
+
+  /** ✅ สร้าง UI หน้าจอคิวงาน (รองรับ Client Search Filter) */
+  function renderTasks() {
+    
+    const container = document.getElementById('taskList');
+    const query = document.getElementById('sQuery').value.trim().toLowerCase();
+
+    // ตัวกรองอัจฉริยะหน้าจอ (Client-side)
+    let filteredTasks = tasks.filter(function(t) {
+      
+      if (!query) {
+        return true;
+      }
+      
+      const orderNum = t.id.replace(/\D/g, ''); 
+      const shortNum = parseInt(orderNum).toString();
+      const phoneStr = t.phone ? t.phone.toString() : "";
+      
+      const matchId = t.id.toLowerCase().includes(query);
+      const matchNum = orderNum.includes(query);
+      const matchShort = (shortNum === query);
+      const matchBranch = (t.branch && t.branch.toLowerCase().includes(query));
+      const matchPhone = phoneStr.includes(query);
+      
+      return matchId || matchNum || matchShort || matchBranch || matchPhone;
+    });
+
+    if(filteredTasks.length === 0) {
+      
+      let msg = "ไม่พบคิวงานในระบบ...";
+      if (activeDeepSearch !== "") {
+        msg = "ค้นหาลึกไม่พบบิลที่ระบุ...";
+      }
+      
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-box-open" style="font-size:60px; color:#E0E0E0; margin-bottom:15px;"></i><h2 style="color:#CCC; margin:0;">' + msg + '</h2></div>';
+      document.getElementById('pageInfo').innerText = "หน้า 1 / 1";
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      
+      return;
+    }
+    
+    // จัดการแบ่งหน้า
+    const totalPages = Math.ceil(filteredTasks.length / pageLimit);
+    if(currentPage > totalPages) {
+      currentPage = totalPages || 1;
+    }
+    
+    const startIdx = (currentPage - 1) * pageLimit;
+    const paginatedTasks = filteredTasks.slice(startIdx, startIdx + pageLimit);
+
+    let htmlBuilder = '';
+    
+    paginatedTasks.forEach(function(t) {
+      
+      // จัดการรายการสินค้าแบบ Checklist
+      let itemsArray = t.items.split('\n').filter(function(line) {
+        return line.trim() !== "";
+      });
+      
+      let itemsHtml = itemsArray.map(function(item, index) {
+        
+        let cleanItem = item.replace(/ \(เหลือ:.*?, สั่ง:(.*?)\)/, ' x <b style="color:var(--primary)">$1</b>');
+        
+        let rowHtml = '<label class="check-row" id="row-' + t.id + '-' + index + '">';
+        rowHtml += '<input type="checkbox" onchange="validateOrder(\'' + t.id + '\', ' + index + ', this)" class="check-' + t.id + '">';
+        rowHtml += '<span>' + cleanItem + '</span>';
+        rowHtml += '</label>';
+        
+        return rowHtml;
+        
+      }).join('');
+
+      // ส่วนแจ้งเตือนถ้าบิลนี้แพ็คเสร็จไปแล้ว (จากโหมดค้นหาลึก)
+      let statusBadge = '';
+      let isAlreadyDone = false;
+      
+      if (t.status === 'Packed' || t.status === 'Success') {
+        isAlreadyDone = true;
+        statusBadge = '<div class="success-badge"><i class="fas fa-check-circle"></i> รายการนี้จัดการสำเร็จแล้ว (' + t.status + ')</div>';
+      }
+
+      let phoneBadge = '';
+      if (t.phone) {
+        phoneBadge = '<a href="tel:' + t.phone + '" class="phone-badge"><i class="fas fa-phone"></i> ' + t.phone + '</a>';
+      }
+
+      htmlBuilder += '<div class="task-card" id="taskCard-' + t.id + '">';
+      htmlBuilder += '<div class="task-header">';
+      htmlBuilder += '<div>';
+      htmlBuilder += '<div class="order-id">' + t.id + '</div>';
+      htmlBuilder += '<div class="badge-container">';
+      htmlBuilder += '<div class="branch-badge"><i class="fas fa-store"></i> ' + t.branch + '</div>';
+      htmlBuilder += phoneBadge;
+      htmlBuilder += '</div>';
+      htmlBuilder += statusBadge;
+      htmlBuilder += '</div>';
+      htmlBuilder += '<div class="task-time">' + t.time + '</div>';
+      htmlBuilder += '</div>';
+      
+      if (!isAlreadyDone) {
+        
+        htmlBuilder += '<div class="item-checklist">' + itemsHtml + '</div>';
+        htmlBuilder += '<button class="action-btn" id="btn-' + t.id + '" disabled onclick="openStockModal(\'' + t.id + '\')">';
+        htmlBuilder += '<i class="fas fa-check-circle"></i> แพ็คของครบแล้ว';
+        htmlBuilder += '</button>';
+        
+      }
+      
+      htmlBuilder += '</div>';
+      
+    });
+    
+    container.innerHTML = htmlBuilder;
+    
+    document.getElementById('pageInfo').innerText = "หน้า " + currentPage + " / " + totalPages;
+    document.getElementById('prevBtn').disabled = (currentPage === 1);
+    document.getElementById('nextBtn').disabled = (currentPage === totalPages);
+  }
+
+  function changePageLimit() { 
+    pageLimit = parseInt(document.getElementById('pgLimit').value); 
+    currentPage = 1; 
+    renderTasks(); 
+  }
+  
+  function nextPage() { 
+    currentPage++; 
+    renderTasks(); 
+  }
+  
+  function prevPage() { 
+    currentPage--; 
+    renderTasks(); 
+  }
+
+  /** ✅ ระบบตรวจสอบการติ๊ก Checklist */
+  function validateOrder(orderId, index, checkboxElement) {
+    
+    const row = document.getElementById('row-' + orderId + '-' + index);
+    
+    if(checkboxElement.checked) {
+      row.classList.add('checked'); 
+    } else {
+      row.classList.remove('checked');
+    }
+    
+    const allChecks = document.querySelectorAll('.check-' + orderId);
+    const checkedCount = document.querySelectorAll('.check-' + orderId + ':checked').length;
+    const actionBtn = document.getElementById('btn-' + orderId);
+    
+    if (checkedCount === allChecks.length) {
+      actionBtn.disabled = false;
+    } else {
+      actionBtn.disabled = true;
+    }
+    
+  }
+
+  function closeM(id) { 
+    document.getElementById(id).style.display = 'none'; 
+  }
+
+  /** ✅ เปิดป๊อปอัป Modal ยืนยันการแพ็ค */
+  function openStockModal(id) {
+    pendingStockId = id;
+    document.getElementById('confirmStockId').innerText = id;
+    document.getElementById('confirmStockModal').style.display = 'flex';
+  }
+
+  /** ✅ ฟังก์ชันกดยืนยัน (Optimistic Update ทำให้ระบบรู้สึกไวขึ้น) */
+  function executeMarkPacked() {
+    
+    closeM('confirmStockModal');
+    
+    if(!pendingStockId) {
+      return;
+    }
+    
+    const idToUpdate = pendingStockId;
+    const btn = document.getElementById('btn-' + idToUpdate);
+    
+    // เปลี่ยนปุ่มเป็นสถานะโหลดทันที ไม่ต้องรอ Server
+    if (btn) {
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่งข้อมูล...';
+      btn.disabled = true;
+    }
+
+    // ลบการ์ดออกจากหน้าจอทันที เพื่อความรวดเร็ว (Client-Side Filtering)
+    setTimeout(function() {
+      
+      tasks = tasks.filter(function(t) {
+        return t.id !== idToUpdate;
+      });
+      
+      renderTasks();
+      
+    }, 400); 
+
+    // ส่งคำสั่งไปอัปเดตสถานะที่ Google Sheets เงียบๆ เบื้องหลัง
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    fetch(GAS_URL + '?action=setOrderStatus&id=' + idToUpdate + '&status=Packed&token=' + token)
+      .catch(function(err) {
+        console.error("Stock update failed in background:", err);
+      });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeToday POS - หน้าร้าน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #A91D3A; --dark: #151515; --bg: #f0f2f5; }
+        body { font-family: 'Prompt', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; }
+
+        /* ฝั่งซ้าย: รายการสินค้า */
+        .product-section { flex: 1; padding: 20px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 15px; overflow: hidden; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card:active { transform: scale(0.95); }
+        .card img { width: 100%; height: 120px; object-fit: cover; }
+        .card-info { padding: 10px; text-align: center; font-weight: 600; }
+
+        /* ฝั่งขวา: ตะกร้าสินค้า */
+        .cart-section { width: 380px; background: white; display: flex; flex-direction: column; border-left: 1px solid #ddd; }
+        .cart-header { padding: 20px; background: var(--dark); color: white; font-size: 1.2rem; }
+        .cart-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .cart-total { padding: 20px; border-top: 2px solid #eee; font-size: 1.5rem; font-weight: 600; text-align: right; }
+        .btn-pay { margin: 20px; padding: 15px; background: #28a745; color: white; border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer; font-family: 'Prompt'; }
+    </style>
+</head>
+<body>
+
+<div class="product-section">
+    <div class="grid" id="productGrid">
+        </div>
+</div>
+
+<div class="cart-section">
+    <div class="cart-header">รายการสั่งซื้อ ☕</div>
+    <div class="cart-list" id="cartList"></div>
+    <div class="cart-total">รวม: <span id="totalPrice">0</span>.-</div>
+    <button class="btn-pay" onclick="checkout()">ชำระเงิน</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAaKskbSw-NCmmyyrMxIVZhqA_T0QaQIhk",
+        authDomain: "coffeetoday-pos.firebaseapp.com",
+        projectId: "coffeetoday-pos",
+        storageBucket: "coffeetoday-pos.firebasestorage.app",
+        appId: "1:567842594200:web:b936ba9babe24447d55fed"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let cart = [];
+
+    // 🔄 ดึงข้อมูลแบบ Real-time (บอสเพิ่มใน admin ปุ๊บ หน้านี้เปลี่ยนปั๊บ)
+    onSnapshot(collection(db, "products"), (snapshot) => {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${p.imageUrl}">
+                <div class="card-info">${p.name}<br><span style="color:var(--primary)">${p.price}.-</span></div>
+            `;
+            card.onclick = () => addToCart(p.name, p.price);
+            grid.appendChild(card);
+        });
+    });
+
+    function addToCart(name, price) {
+        cart.push({ name, price });
+        renderCart();
+    }
+
+    function renderCart() {
+        const list = document.getElementById('cartList');
+        const totalDisp = document.getElementById('totalPrice');
+        list.innerHTML = '';
+        let total = 0;
+        cart.forEach((item, index) => {
+            total += item.price;
+            list.innerHTML += `<div class="cart-item"><span>${item.name}</span><span>${item.price}.-</span></div>`;
+        });
+        totalDisp.innerText = total;
+    }
+
+    window.checkout = () => {
+        if (cart.length === 0) return alert("ยังไม่ได้เลือกสินค้าเลยบอส!");
+        alert("กำลังบันทึกยอดขาย... (เดี๋ยวผมพาทำต่อสเต็ปหน้าครับ)");
+        cart = [];
+        renderCart();
+    };
+</script>
+</body>
+</html>
