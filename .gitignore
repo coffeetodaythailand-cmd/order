@@ -5,3 +5,6 @@
 .DS_Store
 project_notes.md
 context/
+
+# Email Templates (Internal Use Only)
+email_*.html

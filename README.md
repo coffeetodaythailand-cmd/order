@@ -1,78 +1,14 @@
-# 📋 Changelog - CoffeeToday Project
-## [Nitro v5] - Current Version
-### 🚀 New Features (ฟีเจอร์ใหม่)
-- **Mobile Portrait Patch:**
-  - Sidebar เปลี่ยนเป็น Off-Canvas Drawer (ลิ้นชัก) ในมือถือ
-  - ตารางออเดอร์ (Table) เปลี่ยนเป็น **Card View** อัตโนมัติเมื่อจอเล็ก
-  - เพิ่ม Mobile Navigation Bar ด้านบน
-- **God Mode (Manager Close):**
-  - เพิ่มปุ่ม "ปิดงาน" (สีเขียว) ในตารางออเดอร์สำหรับผู้จัดการ
-  - ฟังก์ชัน `managerCloseOrder()` บังคับเปลี่ยนสถานะเป็น Success และเคลียร์กราฟทันที
-- **Advanced Analytics:**
-  - **Stacked Bar Chart:** กราฟแท่งซ้อนแสดงสต็อกสินค้าคงเหลือแยกตามสาขา (แจ้งเตือน "ใกล้หมด")
-  - **PDF Reports:** ระบบออกรายงานสรุปยอดขาย (Summary Report) แนวตั้งด้วย `html2pdf.js`
-  - **Stock Station Upgrade:**
-    - **Deep Search:** ระบบค้นหาบิลย้อนหลัง (Server-side) ดึงบิลที่แพ็คเสร็จแล้วกลับมาดูได้
-    - **Memory State:** ระบบจำสถานะ Checkbox (`checkedState`) ไม่ให้หลุดเวลาจอรีเฟรชอัตโนมัติ
-    - **Toast Alerts:** เปลี่ยนการแจ้งเตือนจาก Popup แข็งๆ เป็นป้ายข้อความนุ่มนวล (Toast)
-    - **Persistent Checkbox:** (Hotfix) บันทึกสถานะการติ๊กเช็คของลง `localStorage` ป้องกันข้อมูลหายเมื่อกด F5 หรือรีเฟรชหน้าจอ
-    - **Memory Auto-Cleanup:** เพิ่มระบบล้างข้อมูลขยะ (Garbage Collection) ใน localStorage อัตโนมัติเมื่อออเดอร์ถูกปิดงานไปแล้ว
-    - **Note:** ระบบ Checkbox เป็นแบบ **Local State** (เครื่องใครเครื่องมัน) ไม่ซิงค์ข้ามเครื่องเพื่อความรวดเร็ว
-  - **Email Template:**
-    - สร้างไฟล์ `email_template.html` ต้นแบบอีเมลดีไซน์ใหม่ (Premium Minimalist)
-    - รองรับ Responsive และตารางรายการสินค้าที่อ่านง่าย
-  - **Backend Structure:**
-    - เพิ่มไฟล์ `Code.gs` เพื่อรองรับการจัดการโค้ด Google Apps Script ในเครื่อง (เตรียมพร้อมสำหรับการแก้ไข Logic ส่งอีเมล)
-    - **Email Logic Upgrade:** ปรับปรุง `Code.gs` ให้แยกอีเมลเป็น 2 ฉบับอัตโนมัติ:
-      1. **ฉบับลูกค้า:** แสดงเฉพาะรายการที่สั่ง (ซ่อนสต็อกคงเหลือ) + เพิ่มเบอร์ติดต่อร้าน 023-756953
-      2. **ฉบับร้านค้า:** แสดงสต็อกคงเหลือครบถ้วน เพื่อให้เช็คของได้ง่าย
+# ☕ CoffeeToday Management System
 
-### 🎨 UI/UX Improvements (ปรับปรุงดีไซน์)
-- **Idle Auto-Refresh:** เพิ่มระบบรีเฟรชหน้าจออัตโนมัติเมื่อไม่มีการใช้งานเกิน 30 นาที
-  - ช่วยให้เมนูสินค้าอัปเดตเป็นปัจจุบันเสมอสำหรับลูกค้าคนถัดไป
-  - **Safe Mode:** จะไม่รีเฟรชถ้ามีการขยับเมาส์หรือสัมผัสหน้าจอ (ป้องกันข้อมูลลูกค้าหายขณะสั่ง)
-  - **Quota Friendly:** ใช้ทรัพยากรน้อยมาก (2 ครั้ง/ชม.) ไม่กระทบขีดจำกัด Google/Firebase
-- **Premium Minimalist:** ปรับลดเงา (Box Shadow) ให้เหลือแค่ Soft Shadow
-- **Status Badges:** ป้ายสถานะ (Packed, Success) ดีไซน์ใหม่ คมชัดขึ้น
-- **Responsive:** ปรับการแสดงผลตารางและปุ่มต่างๆ ให้ยืดหยุ่นตามหน้าจอ
-- **Quick Refresh:** เพิ่มฟังก์ชันกดที่ไอคอน "แก้วกาแฟ" เพื่อรีเฟรชหน้าจอทันที
+**Internal System for Order & Stock Management**
 
-### 🐛 Bug Fixes (แก้บั๊ก)
-- **Drag & Drop:** ปรับปรุงระบบลากวางเมนูให้ลื่นไหลขึ้น (Nitro Smooth Version)
-- **Printing Logic:** แก้ไขปัญหาการใช้ Single Quote ใน HTML string สำหรับการปริ้น (ใช้ Backticks แทน)
-- **Memory Leak:** เพิ่มระบบเคลียร์ `syncIntervalId` ก่อนเริ่ม initApp ใหม่
+## 🔒 Private Repository
+This project contains proprietary code and logic for CoffeeToday operations.
+Unauthorized access or distribution is strictly prohibited.
 
-### 🔧 Infrastructure (ระบบพื้นฐาน)
-- **Git Initialization:** เพิ่มไฟล์ `.gitignore` และ `README.md` เตรียมพร้อมขึ้น GitHub Repository
-- **Project Documentation:** จัดทำเอกสารแนะนำโปรเจกต์ฉบับสมบูรณ์
-- **Git Privacy:** ตั้งค่า `.gitignore` เพื่อซ่อนไฟล์เอกสารภายใน (`project_notes.md`, `context`) ไม่ให้อัปโหลดขึ้น Server
-- **VS Code Config:** ย้ายไฟล์ตั้งค่า (`settings.json`, `extensions.json`) เข้าโฟลเดอร์ `.vscode` เพื่อให้ Extension ทำงานอัตโนมัติ
-  - **Firebase Rules:** อัปเดต Security Rules เป็นโหมด **Permanent Public** (allow read, write: if true) เพื่อแก้ปัญหา Rules หมดอายุ
-  - **Git Protocol:** ยืนยันสถานะเชื่อมต่อ Git และกฎห้ามอัปโหลดไฟล์ Memory Log (project_notes.md, context/)
-  - **System Lock:** บันทึกสถานะ .gitignore ว่า "ตั้งค่าเสร็จสิ้น" ห้ามสร้างซ้ำหรือถามใหม่
-  - **Stock Deployment:** Push โค้ดล่าสุดของหน้าจอ Stock (ระบบความจำถาวรและการค้นหาลึก) ขึ้น Git เรียบร้อย
-  - **Git Sync:** แก้ปัญหา Push Rejected (fetch first) โดยการใช้ `git pull` เพื่อรวมโค้ดจาก Server ก่อน Push
-  - **Merge Resolution:** แก้ปัญหาไฟล์ `coffeetoday_context.md` ชนกัน (Local Changes) โดยการ Commit งานค้างก่อน Pull
-  - **System Restore:** กู้คืนไฟล์ `.gitignore` ที่หายไป เพื่อป้องกันไฟล์ความจำหลุดขึ้น Server
-  - **GAS Protection:** เพิ่มกฎ `*.gs` ลงใน `.gitignore` เพื่อป้องกันไฟล์ Google Apps Script หลุดขึ้น GitHub (ลดความเสี่ยงโค้ดชนกัน)
+## 🛠️ System Requirements
+- Modern Web Browser (Chrome, Edge, Safari)
+- Internet Connection
 
-### 🆘 Git Safety Manual (คู่มือแก้ปัญหา Git ฉบับบอส)
-**1. ถ้าต้องการ "ล้างเครื่อง" (เริ่มใหม่หมด แก้ไฟล์ชนกันมั่ว):**
-> ⚠️ คำเตือน: งานที่ยังไม่ Push จะหายวับไปกับตา! ใช้เมื่ออยากได้ไฟล์ล่าสุดจาก Server เท่านั้น
-```bash
-git fetch origin
-git reset --hard origin/main
-git clean -fd
-```
-
-**2. ถ้าต้องการ "ล็อคงานที่เพิ่งแก้" (Safe Save):**
-> ✅ ใช้สูตรนี้หลังจากแก้โค้ดเสร็จ เพื่อบันทึกงานเฉพาะไฟล์นั้นๆ ไม่ให้ปนกับไฟล์อื่น
-```bash
-git add ชื่อไฟล์ (เช่น git add stock.html)
-git commit -m "อธิบายสิ่งที่แก้"
-git pull origin main --rebase
-git push origin main
-```
-
----
-*Generated by Gemini Code Assist for Boss Bell*
+## 📞 Contact
+For technical support, please contact the System Administrator.
