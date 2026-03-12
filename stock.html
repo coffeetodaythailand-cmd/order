@@ -376,9 +376,19 @@
       font-weight: bold;
       margin-top: 10px;
     }
+
+    /* Toast Notification (แจ้งเตือนแบบนุ่มนวล) */
+    #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
+    .toast { pointer-events: auto; background: rgba(45, 49, 51, 0.95); color: #fff; padding: 12px 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; font-family: 'Prompt'; font-size: 14px; animation: slideDown 0.3s ease-out; backdrop-filter: blur(5px); border-left: 5px solid var(--primary); }
+    .toast.success { border-left-color: var(--green); }
+    .toast i { font-size: 16px; }
+    @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
   </style>
 </head>
 <body>
+
+<div id="toast-container"></div>
 
 <div id="login-overlay">
   <div class="login-box">
@@ -469,6 +479,20 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwiFMRKwx__Gj2tTPgOsd4qe8BXKxgv78P7gMEsL9PejXbHkjRHFrO8kyOXahCbtt81/exec";
   const TOKEN_KEY = "coffee_today_admin_token";
 
+  /** 🍞 Toast Notification Helper */
+  function showToast(msg, type = 'normal') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = `<i class="${type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle'}"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.5s forwards';
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+
   window.onload = function() {
     
     const savedToken = localStorage.getItem(TOKEN_KEY);
@@ -517,7 +541,7 @@
           
         } else {
           
-          alert(res.message);
+          showToast(res.message, 'error');
           lBtn.disabled = false; 
           lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
           pInput.value = ''; 
@@ -526,7 +550,7 @@
         }
       })
       .catch(function(err) {
-        alert("Server connection failed.");
+        showToast("Server connection failed.", 'error');
         lBtn.disabled = false; 
         lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
       });
@@ -568,7 +592,7 @@
     const queryVal = input.value.trim();
     
     if (queryVal === "") {
-      alert("กรุณาพิมพ์สิ่งที่ต้องการค้นหาก่อนครับ");
+      showToast("กรุณาพิมพ์สิ่งที่ต้องการค้นหาก่อนครับ");
       return;
     }
     
@@ -600,7 +624,7 @@
         
       })
       .catch(function(err) {
-        alert("การค้นหาล้มเหลว กรุณาลองใหม่");
+        showToast("การค้นหาล้มเหลว กรุณาลองใหม่", 'error');
         btnSearch.innerHTML = 'ค้นหาลึก';
         btnSearch.disabled = false;
       });
@@ -682,10 +706,13 @@
       
       let itemsHtml = itemsArray.map(function(item, index) {
         
+        // 🧠 Persistent Checkbox: โหลดสถานะจาก Memory
+        const storageKey = 'chk_' + t.id + '_' + index;
+        const isChecked = localStorage.getItem(storageKey) === 'true';
         let cleanItem = item.replace(/ \(เหลือ:.*?, สั่ง:(.*?)\)/, ' x <b style="color:var(--primary)">$1</b>');
         
-        let rowHtml = '<label class="check-row" id="row-' + t.id + '-' + index + '">';
-        rowHtml += '<input type="checkbox" onchange="validateOrder(\'' + t.id + '\', ' + index + ', this)" class="check-' + t.id + '">';
+        let rowHtml = '<label class="check-row ' + (isChecked ? 'checked' : '') + '" id="row-' + t.id + '-' + index + '">';
+        rowHtml += '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' onchange="validateOrder(\'' + t.id + '\', ' + index + ', this)" class="check-' + t.id + '">';
         rowHtml += '<span>' + cleanItem + '</span>';
         rowHtml += '</label>';
         
@@ -707,6 +734,11 @@
         phoneBadge = '<a href="tel:' + t.phone + '" class="phone-badge"><i class="fas fa-phone"></i> ' + t.phone + '</a>';
       }
 
+      // เช็คปุ่ม Active ตั้งแต่เริ่ม render
+      const totalChecks = itemsArray.length;
+      const doneChecks = itemsArray.filter((_, idx) => localStorage.getItem('chk_' + t.id + '_' + idx) === 'true').length;
+      const isBtnEnabled = (totalChecks > 0 && totalChecks === doneChecks);
+
       htmlBuilder += '<div class="task-card" id="taskCard-' + t.id + '">';
       htmlBuilder += '<div class="task-header">';
       htmlBuilder += '<div>';
@@ -723,7 +755,7 @@
       if (!isAlreadyDone) {
         
         htmlBuilder += '<div class="item-checklist">' + itemsHtml + '</div>';
-        htmlBuilder += '<button class="action-btn" id="btn-' + t.id + '" disabled onclick="openStockModal(\'' + t.id + '\')">';
+        htmlBuilder += '<button class="action-btn" id="btn-' + t.id + '" ' + (isBtnEnabled ? '' : 'disabled') + ' onclick="openStockModal(\'' + t.id + '\')">';
         htmlBuilder += '<i class="fas fa-check-circle"></i> แพ็คของครบแล้ว';
         htmlBuilder += '</button>';
         
@@ -760,11 +792,14 @@
   function validateOrder(orderId, index, checkboxElement) {
     
     const row = document.getElementById('row-' + orderId + '-' + index);
+    const storageKey = 'chk_' + orderId + '_' + index;
     
     if(checkboxElement.checked) {
       row.classList.add('checked'); 
+      localStorage.setItem(storageKey, 'true'); // 💾 Save State
     } else {
       row.classList.remove('checked');
+      localStorage.removeItem(storageKey); // 🗑️ Clear State
     }
     
     const allChecks = document.querySelectorAll('.check-' + orderId);
@@ -807,6 +842,15 @@
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่งข้อมูล...';
       btn.disabled = true;
     }
+
+    // 🧹 Memory Auto-Cleanup: ล้างข้อมูล checkbox ของออเดอร์นี้ออกจากเครื่อง
+    Object.keys(localStorage).forEach(function(key) {
+      if (key.startsWith('chk_' + idToUpdate)) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    showToast("กำลังยืนยันออเดอร์ " + idToUpdate + "...", "success");
 
     // ลบการ์ดออกจากหน้าจอทันที เพื่อความรวดเร็ว (Client-Side Filtering)
     setTimeout(function() {
