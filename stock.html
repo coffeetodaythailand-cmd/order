@@ -603,7 +603,8 @@
     activeDeepSearch = queryVal;
     
     const token = localStorage.getItem(TOKEN_KEY);
-    const searchUrl = GAS_URL + '?action=getOrdersByStatus&status=Pending&q=' + encodeURIComponent(queryVal) + '&token=' + token;
+    const v = new Date().getTime(); // 🚀 Cache Buster: ป้องกันการค้นหาแล้วเจอผลลัพธ์เดิมจากแคช
+    const searchUrl = GAS_URL + '?action=getOrdersByStatus&status=Pending&q=' + encodeURIComponent(queryVal) + '&token=' + token + '&v=' + v;
     
     fetch(searchUrl)
       .then(function(res) {

@@ -497,7 +497,8 @@ function clearQuickFilterActive() {
 /** ✅ ฟังก์ชันโหลดและแบ่งหน้า Approve Queue (V17 Master) */
 function loadApproveList(token) {
   const currentToken = token || localStorage.getItem(TOKEN_KEY);
-  const apiUrl = GAS_URL + '?action=getOrdersByStatus&status=Packed&token=' + currentToken;
+  const v = new Date().getTime(); // 🚀 Cache Buster: ป้องกันเบราว์เซอร์จำข้อมูลเก่า
+  const apiUrl = GAS_URL + '?action=getOrdersByStatus&status=Packed&token=' + currentToken + '&v=' + v;
   
   fetch(apiUrl)
     .then(res => res.json())
