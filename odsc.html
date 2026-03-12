@@ -1030,21 +1030,27 @@
     }
   }
 
-  // 🕒 Auto-Refresh System (ระบบรีเฟรชอัตโนมัติเมื่อไม่มีคนใช้งาน)
-  // ป้องกันเมนูเก่าค้างหน้าจอนานเกินไป โดยไม่รบกวนลูกค้าที่กำลังกด
-  let idleTimer = 0;
-  const maxIdleMinutes = 30; // 👈 ตั้งเวลาที่นี่ (30 นาที)
+  // 🕒 Auto-Refresh System (Robust Timestamp Version by Gemini)
+  // 🚀 อัปเกรด: ใช้ Timestamp เช็คเวลาจริง แก้ปัญหา Browser แอบหลับ (Throttling) เมื่อเปิดทิ้งไว้นาน
+  let lastActivity = Date.now();
+  const maxIdleTime = 30 * 60 * 1000; // 30 นาที (หน่วยมิลลิวินาที)
 
+  function resetIdleTimer() {
+    lastActivity = Date.now();
+  }
+
+  // ตรวจสอบทุก 10 วินาที (แม่นยำและกินทรัพยากรน้อย)
   setInterval(function() {
-    idleTimer++;
-    // ถ้าปล่อยทิ้งไว้นานเกินกำหนด ให้โหลดหน้าจอใหม่เพื่อดึงเมนูล่าสุด
-    if (idleTimer >= maxIdleMinutes) {
+    const idleTime = Date.now() - lastActivity;
+    if (idleTime >= maxIdleTime) {
       window.location.reload();
     }
-  }, 60000); // เช็คเวลาทุกๆ 1 นาที
+  }, 10000); 
 
-  // ถ้ามีการขยับเมาส์, กดแป้น, จิ้มจอ หรือเลื่อนหน้าจอ ให้รีเซ็ตเวลานับใหม่ (ถือว่ามีคนใช้งานอยู่)
-  ['mousemove', 'keypress', 'touchstart', 'scroll'].forEach(evt => document.addEventListener(evt, () => idleTimer = 0, {passive: true}));
+  // ดักจับการใช้งานทุกรูปแบบ เพื่อรีเซ็ตเวลา (ถือว่ามีคนใช้งานอยู่)
+  ['mousemove', 'keypress', 'touchstart', 'scroll', 'click'].forEach(evt => 
+    document.addEventListener(evt, resetIdleTimer, {passive: true})
+  );
 </script>
 </body>
 </html>
