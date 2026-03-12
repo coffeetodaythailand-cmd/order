@@ -1,0 +1,7 @@
+# Google Apps Script files (Edit on Web Editor only)
+*.gs
+
+# System Files & Logs
+.DS_Store
+project_notes.md
+context/
