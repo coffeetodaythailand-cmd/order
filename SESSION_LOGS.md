@@ -61,4 +61,35 @@
 | **Database** | 🟢 Online | Firebase & Google Sheets syncing correctly. |
 | **Memory** | 🟢 Secured | Hosted on Private GitHub (Ai-BuH). |
 
+---
+
+## 4. 🤖 Automation Tools (Real-time Sync)
+**Objective:** Eliminate manual git commands to prevent data loss due to fatigue.
+
+### 🛠️ New Tool: `auto-sync.ps1`
+- **Function:** PowerShell script that monitors `.md` files (Memory/Logs) for changes.
+- **Trigger:** Checks every 30 seconds.
+- **Action:** Automatically runs `git add`, `commit`, and `push` in background.
+- **Benefit:** "Boss" just needs to Ctrl+S (Save), and the backup happens automatically.
+
+### ⚙️ VS Code Automation (`tasks.json`)
+- **Function:** Auto-start the `auto-sync.ps1` script when the project folder is opened.
+- **Configuration:** Located in `.vscode/tasks.json` with `runOn: folderOpen`.
+- **Status:** User simply needs to "Allow and Run" once upon next restart.
+
+### 🔄 Two-Way Sync Upgrade (Multi-Device Support)
+- **Upgrade:** Modified `auto-sync.ps1` to include `git pull --rebase` in the loop.
+- **Function:** The bot now checks for updates from the cloud (other machines) *before* checking for local changes.
+- **Result:** Enables real-time context synchronization across multiple active devices (Machine A <-> GitHub <-> Machine B).
+
+### 🛡️ Smart Sync Logic Optimization
+- **Problem:** Potential merge conflicts if `git pull` runs while local files are dirty (unsaved/uncommitted).
+- **Fix:** Updated `auto-sync.ps1` to Commit local changes *first*, then Pull --rebase, then Push.
+- **Benefit:** Ensures a clean working directory before interacting with the cloud, reducing sync errors.
+
+### 🔓 Full Project Sync Unlocked
+- **Issue:** Auto-sync was previously limited to `*.md` files, causing code changes (`.js`, `.html`) to be ignored.
+- **Fix:** Updated `auto-sync.ps1` to track ALL file changes (`git add .`).
+- **Result:** Any modification to the project is now automatically pushed to GitHub.
+
 *End of Log.*

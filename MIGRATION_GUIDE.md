@@ -29,3 +29,11 @@ git clone https://github.com/USER/REPO_NAME.git
 2. ไปที่เมนู **File > Open Folder**
 3. เลือกโฟลเดอร์โปรเจคที่เพิ่งดึงมา
 4. กด **Go Live** เพื่อรันหน้าเว็บทดสอบได้เลย!
+
+## ❓ Troubleshooting (ปัญหาที่พบบ่อย)
+### ❌ Error: "git : The term 'git' is not recognized..."
+**สาเหตุ:** เครื่องใหม่ยังไม่ได้ติดตั้งโปรแกรม Git ครับ
+**วิธีแก้:**
+1. โหลด Git ที่ [git-scm.com](https://git-scm.com/downloads)
+2. ติดตั้ง (กด Next ยาวๆ)
+3. **ปิด VS Code แล้วเปิดใหม่** (สำคัญมาก) แล้วลองพิมพ์คำสั่งเดิมอีกครั้ง
