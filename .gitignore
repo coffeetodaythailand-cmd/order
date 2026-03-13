@@ -1,0 +1,12 @@
+# 🔒 LOCK: ห้ามเอาสมอง AI ขึ้นเด็ดขาด
+Ai-BuH/
+brain_data/
+
+# 📄 ลบไฟล์ขยะและไฟล์ที่ไม่ใช้ใน Git
+Code.gs
+git_guide.md
+tasks.json
+SESSION_LOGS.md
+MIGRATION_GUIDE.md
+auto-sync.ps1
+changelog.md
