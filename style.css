@@ -43,78 +43,114 @@ body {
   left: 0; 
   width: 100%; 
   height: 100%; 
-  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+  background: #111315; /* สีดำลึกแบบ Premium OLED */
   z-index: 9999; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  transition: opacity 0.5s ease;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.login-box { 
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 60px 40px; 
-  border-radius: 40px; 
-  width: 90%; 
-  max-width: 420px; 
+/* 🛡️ Borderless Premium Numpad Container */
+.pin-container {
+  background: transparent;
+  padding: 40px; 
+  width: 100%; 
+  max-width: 380px; 
   text-align: center; 
-  border: 1px solid rgba(255,255,255,0.4);
-  box-shadow: var(--shadow-deep); 
-  animation: fadeInScale 0.6s ease-out;
+  border: none;
+  box-shadow: none; 
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pin-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 50px;
+}
+
+.pin-indicators .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pin-indicators .dot.filled {
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  transform: scale(1.15);
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px 20px;
+  justify-items: center;
+}
+
+.num-btn {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.03); /* โปร่งแสงบางๆ */
+  font-family: 'Prompt';
+  font-size: 28px;
+  font-weight: 300;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); /* เอฟเฟกต์เด้งดึ๋งนุ่มๆ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.num-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.num-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.9);
+}
+
+.num-btn.del-btn {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 24px;
+}
+
+.num-btn.del-btn:hover {
+  background: transparent;
+  color: var(--red);
+}
+
+.num-btn.del-btn:active {
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  transform: scale(0.9);
+}
+
+.error-shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+  40%, 60% { transform: translate3d(6px, 0, 0); }
 }
 
 @keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
-
-.login-box i.fa-shield-alt {
-  font-size: 85px; 
-  background: linear-gradient(to bottom, #A91D3A, #7a152a);
-  background-clip: text;
-  -webkit-background-clip: text; 
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 25px; 
-  filter: drop-shadow(0 10px 15px rgba(169,29,58,0.3));
-}
-
-.login-header {
-  font-family: 'Prompt';
-  font-weight: 600;
-  font-size: 24px;
-  color: #333333;
-  margin-bottom: 10px;
-}
-
-.login-sub {
-  color: #666666;
-  font-size: 14px;
-  margin-bottom: 40px;
-}
-
-.login-input { 
-  width: 100%; 
-  padding: 22px; 
-  border: 2px solid #EEEEEE; 
-  border-radius: 20px; 
-  margin-bottom: 30px; 
-  text-align: center; 
-  font-size: 32px; 
-  font-weight: bold;
-  outline: none; 
-  box-sizing: border-box; 
-  background-color: #FFFFFF; 
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.login-input:focus { 
-  border-color: var(--red); 
-  box-shadow: 0 0 25px rgba(169,29,58,0.15); 
-  transform: translateY(-2px);
-}
-
 /*
   =========================================================================
   MAIN APP STRUCTURE & NAVIGATION
@@ -294,6 +330,16 @@ body {
   flex-direction: column-reverse; /* สลับปุ่มขึ้นบน โลโก้ลงล่าง */
   gap: 25px;
   padding-left: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.sidebar.collapsed #toggle-btn {
+  margin-left: 0;
+}
+
+.sidebar.collapsed .brand-logo {
+  margin: 0;
   justify-content: center;
 }
 
@@ -1167,4 +1213,14 @@ td .fa-trash-alt:hover {
 .action-btn-compact:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* 🛡️ God Mode: ป้องกัน iOS Safari Auto-Zoom เมื่อคลิกช่องกรอกข้อมูล (เฉพาะในมือถือ) */
+@media screen and (max-width: 768px) {
+  input[type="text"], 
+  input[type="number"], 
+  input[type="date"], 
+  select {
+    font-size: 16px !important; 
+  }
 }

@@ -49,8 +49,8 @@ git clone https://github.com/bellybabor0123-debug/Ai-BuH.git
 
 ### 2. ดึงโปรเจคกาแฟ (Source Code) ☕
 ```bash
-# เปลี่ยน <URL> เป็นลิ้งค์ Repo ของบอส
-git clone <URL_GITHUB_COFFEE_TODAY>
+# ดึงโปรเจคหลัก (Order System)
+git clone https://github.com/coffeetodaythailand-cmd/order.git
 ```
 
 ## 📝 กฎเหล็กของโปรเจค (Rules)

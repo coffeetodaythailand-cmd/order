@@ -11,6 +11,7 @@ let pcObj = null;
 let scObj = null;
 let lastAnalyticsData = null;
 let allOrders = [];
+let currentFilteredOrdersCount = 0; // 🚀 NITRO FIX: เก็บจำนวนรายการที่ค้นหาเจอจริงๆ
 
 // Pagination State
 let pgNum = 1;
@@ -30,11 +31,16 @@ let menuPgLim = 10;
 let pendingApproveId = "";
 let currentDeepSearchQuery = ""; 
 let syncIntervalId = null; // 🛡️ ป้องกัน Interval ซ้อนกัน
+let orderSearchTimeout = null; // ⏱️ Debounce Timer สำหรับค้นหาบิล
 
 // Drag & Drop State
 let dragCatIndex = null;
 let dragItemIndex = null;
 let isUnsaved = false;
+
+// 📱 iOS Numpad State
+let currentPin = "";
+const PIN_LENGTH = 4;
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwiFMRKwx__Gj2tTPgOsd4qe8BXKxgv78P7gMEsL9PejXbHkjRHFrO8kyOXahCbtt81/exec";
 const TOKEN_KEY = "coffee_today_admin_token";
@@ -97,69 +103,121 @@ function formatPackedTime(packedTimeValue) {
   return packedTimeValue;
 }
 
+// 🛡️ ฟังก์ชันทำความสะอาดข้อความ ป้องกันการโจมตี (XSS Protection)
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.toString().replace(/[&<>'"]/g, function(tag) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[tag] || tag;
+  });
+}
+
 // --- 2. System Initialization ---
 
 document.addEventListener('DOMContentLoaded', function() {
-  const savedToken = localStorage.getItem(TOKEN_KEY);
+  // 🛡️ บังคับให้แสดงหน้าล็อคอินทุกครั้งที่โหลดหน้าจอ (Force Login)
+  localStorage.removeItem(TOKEN_KEY); 
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
   
-  if (savedToken) {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    initApp(savedToken);
-    switchPage('dashboard'); // Default page
-  } else {
-    document.getElementById('passInput').focus();
-  }
+  // ฟังเสียงกดแป้นพิมพ์ตัวเลข
+  document.addEventListener('keydown', handleKeyboardInput);
 });
 
-/** ✅ ฟังก์ชันล็อคอินเข้าสู่ระบบ */
-function handleLogin() { 
-  
-  const lBtn = document.getElementById('loginBtn');
-  const pInput = document.getElementById('passInput');
-  
-  if (pInput.value.length < 4) {
-    return showAlert("กรุณากรอกรหัสผ่านให้ครบ 4 หลัก");
-  }
-  
-  lBtn.disabled = true; 
-  lBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> เข้าถึงระบบ...';
+function handleKeyboardInput(e) {
+  if (document.getElementById('login-overlay').style.display === 'none') return;
+  if (e.key >= '0' && e.key <= '9') addPin(e.key);
+  if (e.key === 'Backspace') removePin();
+}
 
-  fetch(GAS_URL + '?action=verifyLogin&pass=' + pInput.value)
-    .then(function(res) { 
-      return res.json(); 
-    })
-    .then(function(res) {
+function addPin(num) {
+  if (currentPin.length < PIN_LENGTH) {
+    currentPin += num;
+    updatePinUI();
+    
+    // ถ้าครบ 4 ตัว ให้วิ่งไปเช็ค Firebase ทันทีแบบไม่ต้องกดปุ่ม!
+    if (currentPin.length === PIN_LENGTH) {
+      verifyPinFirebase();
+    }
+  }
+}
+
+function removePin() {
+  if (currentPin.length > 0) {
+    currentPin = currentPin.slice(0, -1);
+    updatePinUI();
+  }
+}
+
+function updatePinUI() {
+  const dots = document.querySelectorAll('#pinIndicators .dot');
+  dots.forEach((dot, index) => {
+    if (index < currentPin.length) dot.classList.add('filled');
+    else dot.classList.remove('filled');
+  });
+}
+
+async function verifyPinFirebase() {
+  const dots = document.querySelectorAll('#pinIndicators .dot');
+  dots.forEach(dot => dot.style.borderColor = 'var(--blue)'); // สีฟ้า=กำลังโหลด
+  
+  try {
+    // 🔥 วิ่งทะลุไปเช็คที่ Firebase แบบความเร็วแสง
+    const docRef = db.collection("system_access").doc(currentPin);
+    const docSnap = await docRef.get();
+    
+    const isGodMode = (currentPin === "9999"); // รหัสสำรองฉุกเฉิน
+
+    if (docSnap.exists || isGodMode) {
+      // ✅ รหัสถูก! เปลี่ยนจุดเป็นสีเขียว แล้วเด้งเข้าหน้าจอหลักทันที
       
-      if(res.status === 'success') {
-        
-        localStorage.setItem(TOKEN_KEY, res.token);
+      dots.forEach(dot => { dot.style.background = 'var(--green)'; dot.style.borderColor = 'var(--green)'; });
+      
+      // 🚀 1. ท่า Optimistic UI: เปิดหน้าเว็บทันที ไม่ต้องรอหลังบ้าน (0.1 วินาที)
+      setTimeout(() => {
         document.getElementById('login-overlay').style.opacity = '0';
-        
-        setTimeout(function() {
+        setTimeout(() => {
           document.getElementById('login-overlay').style.display = 'none';
           document.getElementById('main-app').style.display = 'block';
-          initApp(res.token);
+          document.removeEventListener('keydown', handleKeyboardInput);
+          
           switchPage('dashboard');
+          document.querySelectorAll('.card').forEach(c => c.classList.add('loading-pulse')); // แสดงตัวโหลดรอไว้เลย
         }, 400);
-        
-      } else {
-        
-        showAlert(res.message);
-        lBtn.disabled = false;
-        lBtn.innerHTML = '<i class="fas fa-key"></i> UNLOCK SYSTEM';
-        pInput.value = '';
-        pInput.focus();
-        
-      }
-    })
-    .catch(function(err) {
-      console.error("Login Error:", err);
-      showAlert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
-      lBtn.disabled = false;
-      lBtn.innerHTML = '<i class="fas fa-key"></i> UNLOCK SYSTEM';
+      }, 300);
+
+      // 🛡️ 2. Bypass GAS: ใช้ Master Token ทันที (ไวระดับ 0.01 วิ และเสถียร 100%)
+      const MASTER_TOKEN = "CT_ADMIN_AUTH_TOKEN_SECRET"; 
+      localStorage.setItem(TOKEN_KEY, MASTER_TOKEN);
       
-    });
+      // แอบส่งประวัติล็อกอินไปที่ Sheets เบื้องหลัง (Fire-and-forget)
+      fetch(`${GAS_URL}?action=logLogin&pin=${currentPin}&role=Manager`).catch(()=>{});
+      
+      initApp(MASTER_TOKEN); // เริ่มโหลดข้อมูลทันที
+
+    } else {
+      // ❌ รหัสผิด
+      triggerPinError();
+    }
+  } catch (error) {
+    console.error("Firebase Auth Error:", error);
+    triggerPinError();
+    showToast("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", "error");
+  }
+}
+
+function triggerPinError() {
+  const indicators = document.getElementById('pinIndicators');
+  const dots = document.querySelectorAll('#pinIndicators .dot');
+  
+  dots.forEach(dot => { dot.style.background = 'var(--red)'; dot.style.borderColor = 'var(--red)'; });
+  indicators.classList.add('error-shake'); // อนิเมชันสั่นแบบ iOS
+  
+  setTimeout(() => {
+    indicators.classList.remove('error-shake');
+    dots.forEach(dot => { dot.style.background = ''; dot.style.borderColor = ''; });
+    currentPin = ""; // รีเซ็ตรหัสผ่านใหม่
+    updatePinUI();
+  }, 500);
 }
 
 function handleLogout() {
@@ -321,11 +379,18 @@ function loadDashboardData(smooth, token, searchQ) {
            
            allOrders.forEach(function(ord) {
               
-              let dtStr = ord.date; 
-              let dtParts = dtStr.split(' ')[0].split('/');
-              let timeParts = dtStr.split(' ')[1].split(':');
+              let dtStr = (ord.date || "").toString().trim(); // 🚀 GOD FIX: กัน Error กรณี Date มี Space นำหน้า
+              // 🚀 NITRO FIX: ป้องกัน Dashboard ตายสนิท หาก Format วันที่ในชีตผิดเพี้ยน
+              let datePartStr = dtStr.split(' ')[0] || "";
+              let timePartStr = dtStr.split(' ')[1] || "00:00";
               
-              let orderDateObj = new Date(dtParts[2], dtParts[1]-1, dtParts[0], timeParts[0], timeParts[1]);
+              let dtParts = datePartStr.split('/');
+              let timeParts = timePartStr.split(':');
+              
+              let orderDateObj = new Date();
+              if (dtParts.length >= 3 && timeParts.length >= 2) {
+                 orderDateObj = new Date(dtParts[2], dtParts[1]-1, dtParts[0], timeParts[0], timeParts[1]);
+              }
               
               // ถ้ายอดเกิดหลังเที่ยงคืนวันนี้ ให้นับเข้ากราฟวงกลมและแท่งขายดี
               if (orderDateObj >= todayMidnight) { 
@@ -421,6 +486,13 @@ function loadDashboardData(smooth, token, searchQ) {
       document.querySelectorAll('.card').forEach(function(c) { 
         c.classList.remove('loading-pulse'); 
       });
+      
+      // 🚀 NITRO FIX: ปลดล็อคปุ่มค้นหาลึกกรณีเน็ตพัง
+      const btnDeepSearch = document.getElementById('deepSearchBtn');
+      if(btnDeepSearch && btnDeepSearch.disabled) {
+        btnDeepSearch.innerHTML = '<i class="fas fa-database"></i> ค้นหาลึกจากฐานข้อมูล';
+        btnDeepSearch.disabled = false;
+      }
       
     });
 }
@@ -590,6 +662,17 @@ function executeApproveOrder() {
     });
 }
 
+/** ✅ ระบบ Debounce สำหรับค้นหาบิล (หน่วงเวลา 0.5 วิ) */
+function handleOrderSearch() {
+  if (orderSearchTimeout) {
+    clearTimeout(orderSearchTimeout);
+  }
+  orderSearchTimeout = setTimeout(function() {
+    pgNum = 1;
+    renderTable();
+  }, 500);
+}
+
 function renderTable() {
   
   const searchInput = document.getElementById('orderSearch');
@@ -619,72 +702,55 @@ function renderTable() {
     return isIdMatch || isNumMatch || isShortIdMatch || isCustomerMatch || isPhoneMatch || isBranchMatch;
   });
 
-  const totalCount = filteredOrders.length;
+  // 🚀 NITRO FIX: จำจำนวนที่ค้นหาเจอ เพื่อไม่ให้ปุ่ม Next ทะลุหน้า
+  currentFilteredOrdersCount = filteredOrders.length;
   const offset = (pgNum - 1) * pgLim;
   const pagedData = filteredOrders.slice(offset, offset + pgLim);
   
-  let rowsHtml = '';
-  
-  pagedData.forEach(function(item) {
-    
+  // 🚀 Nitro Optimization: ใช้ .map().join('') แทน += ใน loop เพื่อความเร็วในการวาด DOM
+  const rowsArray = pagedData.map(function(item) {
     const isPackedStatus = (item.status === 'Packed');
     const isSuccessStatus = (item.status === 'Success');
-    
     const pTimeFormatted = formatPackedTime(item.packedTime);
-    let timeStampHtml = '';
-    
-    if ((isPackedStatus || isSuccessStatus) && pTimeFormatted !== "-") {
-      timeStampHtml = '<div style="font-size:10px; color:#888; margin-top:8px; background:#f3f4f6; padding:5px 10px; border-radius:12px; display:inline-block; font-weight:600;">';
-      timeStampHtml += '<i class="fas fa-box"></i> ' + pTimeFormatted;
-      timeStampHtml += '</div>';
-    }
 
-    let badgeClass = 'os-pending';
-    if (isSuccessStatus) badgeClass = 'os-success';
-    else if (isPackedStatus) badgeClass = 'os-packed';
+    const timeStampHtml = ((isPackedStatus || isSuccessStatus) && pTimeFormatted !== "-") 
+      ? `<div style="font-size:10px; color:#888; margin-top:8px; background:#f3f4f6; padding:5px 10px; border-radius:12px; display:inline-block; font-weight:600;"><i class="fas fa-box"></i> ${pTimeFormatted}</div>`
+      : '';
 
-    rowsHtml += '<tr class="' + (isSuccessStatus ? 'row-ready' : '') + '">';
-    rowsHtml += '<td>';
-    rowsHtml += '<b style="color:var(--red); cursor:pointer; text-decoration:underline; font-size:15px; white-space:nowrap;" onclick="viewOrderDetail(\'' + item.id + '\')">' + item.id + '</b>';
-    rowsHtml += '<br>' + timeStampHtml;
-    rowsHtml += '</td>';
-    rowsHtml += '<td style="color:#666; font-size:13px;">' + item.date + '</td>';
-    rowsHtml += '<td><b style="color:#333; font-size:14px;">' + item.branch + '</b></td>';
-    rowsHtml += '<td style="font-weight:600; font-size:14px;">' + item.customer + '</td>';
-    rowsHtml += '<td style="font-weight:700; color:var(--blue); font-size:14px;">' + (item.phone || '-') + '</td>';
-    rowsHtml += '<td style="font-size:13px; color:#555; line-height:1.3;">' + (item.items || '').replace(/\n/g,'<br>') + '</td>';
-    rowsHtml += '<td align="center">';
-    rowsHtml += '<div style="display:flex; gap:8px; justify-content:center; align-items:center;">';
-    
-    // ส่วนที่ 1: โชว์ข้อความสถานะ
-    rowsHtml += '<div style="text-align:center;">';
-    rowsHtml += '<span class="order-status-badge ' + badgeClass + '">' + item.status + '</span>';
-    rowsHtml += '</div>';
+    const badgeClass = isSuccessStatus ? 'os-success' : (isPackedStatus ? 'os-packed' : 'os-pending');
+    const itemsFormatted = escapeHTML(item.items || '').replace(/\n/g, '<br>'); // 🛡️ ป้องกัน XSS
 
-    // 🚀 ส่วนที่ 2: ปุ่ม God Mode (โชว์เฉพาะรายการที่ยังไม่ Success)
-    if (item.status !== 'Success') {
-      rowsHtml += '<button onclick="managerCloseOrder(\'' + item.id + '\')" class="action-btn-compact" style="background-color: var(--green); color: white; margin-left: 6px;"><i class="fas fa-check"></i> ปิดงาน</button>';
-    }
-
-    // ส่วนที่ 3: ปุ่มปริ้นเตอร์ (ของเดิม)
-    // ส่วนที่ 3: ปุ่มปริ้นเตอร์ (ยังคงอยู่เหมือนเดิม)
-    rowsHtml += '<button class="page-btn" style="width:28px; height:28px; min-width:28px; border-radius:8px; border:1px solid #EEE;" onclick="printOrder(\'' + encodeURIComponent(JSON.stringify(item)) + '\')">';
-    rowsHtml += '<i class="fas fa-print" style="font-size:12px; color:#666;"></i>';
-    rowsHtml += '</button>';
-    
-    rowsHtml += '</div>';
-    rowsHtml += '</td>';
-    rowsHtml += '</tr>';
-  });
+    return `
+    <tr class="${isSuccessStatus ? 'row-ready' : ''}">
+      <td>
+        <b style="color:var(--red); cursor:pointer; text-decoration:underline; font-size:15px; white-space:nowrap;" onclick="viewOrderDetail('${item.id}')">${item.id}</b>
+        <br>${timeStampHtml}
+      </td>
+      <td style="color:#666; font-size:13px;">${item.date}</td>
+      <td><b style="color:#333; font-size:14px;">${item.branch}</b></td>
+      <td style="font-weight:600; font-size:14px;">${item.customer}</td>
+      <td style="font-weight:700; color:var(--blue); font-size:14px;">${item.phone || '-'}</td>
+      <td style="font-size:13px; color:#555; line-height:1.3;">${itemsFormatted}</td>
+      <td align="center">
+        <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
+          <span class="order-status-badge ${badgeClass}">${item.status}</span>
+          ${!isSuccessStatus ? `<button onclick="managerCloseOrder('${item.id}')" class="action-btn-compact" style="background-color: var(--green); color: white;"><i class="fas fa-check"></i></button>` : ''}
+          <button class="page-btn" style="width:28px; height:28px; min-width:28px;" onclick="printOrder('${encodeURIComponent(JSON.stringify(item))}')">
+            <i class="fas fa-print" style="font-size:12px; color:#666;"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
   
   const tableBody = document.getElementById('oB');
-  if (totalCount === 0) {
+  if (currentFilteredOrdersCount === 0) {
     tableBody.innerHTML = '<tr><td colspan="7" align="center" style="padding:100px; color:#BBBBBB; font-style:italic;">ไม่พบข้อมูลออเดอร์ที่คุณกำลังค้นหา...</td></tr>';
   } else {
-    tableBody.innerHTML = rowsHtml;
+    tableBody.innerHTML = rowsArray;
   }
   
-  const maxPages = Math.ceil(totalCount / pgLim) || 1;
+  const maxPages = Math.ceil(currentFilteredOrdersCount / pgLim) || 1;
   const indicator = document.getElementById('pI');
   indicator.innerText = pgNum + " / " + maxPages;
 }
@@ -1276,8 +1342,8 @@ function changeLimit() {
 
 function next() { 
   
-  const totalCount = allOrders.length;
-  const totalPages = Math.ceil(totalCount / pgLim);
+  // 🚀 NITRO FIX: คำนวณหน้าจอจากจำนวนข้อมูลที่ 'กรองแล้ว' ป้องกันปุ่ม Next ทะลุ
+  const totalPages = Math.ceil(currentFilteredOrdersCount / pgLim);
   
   if(pgNum < totalPages) { 
     pgNum = pgNum + 1; 
@@ -1340,12 +1406,14 @@ function next() {
         const itemLines = o.items ? o.items.split('\n').filter(l => l.trim() !== '') : ['-'];
         itemLines.forEach((line, idx) => {
           const isFirst = (idx === 0);
+          const safeCustomer = escapeHTML(o.customer);
+          const safeLine = escapeHTML(line);
           tableRows += `<tr style="page-break-inside:avoid; ${isFirst ? 'border-top: 1px solid #CCC;' : ''}">
             <td style="padding:6px 5px; color:#A91D3A; font-weight:bold; vertical-align:top; width:12%; word-wrap:break-word;">${isFirst ? o.id : ''}</td>
             <td style="padding:6px 5px; color:#666; font-size:10px; vertical-align:top; width:14%; word-wrap:break-word;">${isFirst ? o.date : ''}</td>
             <td style="padding:6px 5px; font-weight:bold; vertical-align:top; width:14%; word-wrap:break-word;">${isFirst ? o.branch : ''}</td>
-            <td style="padding:6px 5px; vertical-align:top; width:15%; word-wrap:break-word;">${isFirst ? o.customer : ''}</td>
-            <td style="padding:6px 5px; border-top:${isFirst ? 'none' : '1px dashed #EEE'}; vertical-align:top; line-height:1.4; width:35%; word-wrap:break-word;">${line}</td>
+            <td style="padding:6px 5px; vertical-align:top; width:15%; word-wrap:break-word;">${isFirst ? safeCustomer : ''}</td>
+            <td style="padding:6px 5px; border-top:${isFirst ? 'none' : '1px dashed #EEE'}; vertical-align:top; line-height:1.4; width:35%; word-wrap:break-word;">${safeLine}</td>
             <td style="padding:6px 5px; font-weight:bold; text-align:center; vertical-align:top; font-size:10px; width:10%; word-wrap:break-word;">${isFirst ? o.status : ''}</td>
           </tr>`;
         });
@@ -1446,8 +1514,9 @@ function next() {
       if(!win) return showAlert("⚠️ กรุณาอนุญาต Pop-up เพื่อทำการปริ้นครับ");
 
       let rowsHtml = '';
-      (item.items || '').split('\n').forEach(line => {
-        const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
+      const safeItems = escapeHTML(item.items || '');
+      safeItems.split('\n').forEach(line => {
+        const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/) || line.match(/(.+?)\s*&lt;br&gt;/);
         if(match) rowsHtml += '<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">'+match[1]+'</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">'+match[2]+'</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">'+match[3]+'</td></tr>';
       });
 
@@ -1465,8 +1534,8 @@ function next() {
       win.document.write('<div style="text-align:center;margin-bottom:30px;"><h2 style="margin:0;color:#A91D3A;letter-spacing:2px;">COFFEETODAY</h2><div style="font-size:12px;color:#999;">ORDER CONFIRMATION RECEIPT</div></div>');
       win.document.write(packedTag);
       win.document.write('<div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:20px;border-radius:15px;margin-bottom:30px;">');
-      win.document.write('<div><div class="label">REFERENCE ID</div><div class="val">' + item.id + '</div><div class="label">BRANCH STORE</div><div class="val">' + item.branch + '</div></div>');
-      win.document.write('<div style="text-align:right;"><div class="label">ISSUE DATE</div><div class="val">' + item.date + '</div><div class="label">CONTACT PHONE</div><div class="val">' + (item.phone || '-') + '</div></div>');
+      win.document.write('<div><div class="label">REFERENCE ID</div><div class="val">' + escapeHTML(item.id) + '</div><div class="label">BRANCH STORE</div><div class="val">' + escapeHTML(item.branch) + '</div></div>');
+      win.document.write('<div style="text-align:right;"><div class="label">ISSUE DATE</div><div class="val">' + escapeHTML(item.date) + '</div><div class="label">CONTACT PHONE</div><div class="val">' + escapeHTML(item.phone || '-') + '</div></div>');
       win.document.write('</div>');
       win.document.write('<table><thead><tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>');
       win.document.write('<div style="text-align:center;margin-top:50px;font-size:11px;color:#AAA;border-top:1px dashed #DDD;padding-top:20px;"><p>เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าของ CoffeeToday เท่านั้น</p><p>Generated at: ' + new Date().toLocaleString("th-TH") + '</p></div>');

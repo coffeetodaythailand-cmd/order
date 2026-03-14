@@ -2,11 +2,19 @@
 Ai-BuH/
 brain_data/
 
+# 🗑️ ไฟล์แฝดที่ไม่ได้ใช้แล้ว (ยุบรวมเป็น order.html แล้ว)
+odfc.html
+odsc.html
+
 # 📄 ลบไฟล์ขยะและไฟล์ที่ไม่ใช้ใน Git
 Code.gs
+Code_Review.gs
+Code_External.gs
 git_guide.md
 tasks.json
 SESSION_LOGS.md
 MIGRATION_GUIDE.md
 auto-sync.ps1
 changelog.md
+project_status.md
+.vscode/

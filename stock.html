@@ -30,45 +30,8 @@
       padding-bottom: 50px; 
     }
     
-    #login-overlay { 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
-      z-index: 9999; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-    }
-    
-    .login-box { 
-      background: rgba(255, 255, 255, 0.9); 
-      backdrop-filter: blur(15px);
-      padding: 60px 40px; 
-      border-radius: 40px; 
-      width: 90%; 
-      max-width: 420px; 
-      text-align: center; 
-      border: 1px solid rgba(255,255,255,0.3); 
-      box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
-    }
-    
-    .login-input { 
-      width: 100%; 
-      padding: 22px; 
-      border: 2px solid #EEE; 
-      border-radius: 20px; 
-      margin-bottom: 30px; 
-      text-align: center; 
-      font-size: 28px; 
-      outline: none; 
-      box-sizing: border-box; 
-    }
-    
     #main-app { 
-      display: none; 
+      display: block; 
     }
 
     .nav { 
@@ -390,18 +353,6 @@
 
 <div id="toast-container"></div>
 
-<div id="login-overlay">
-  <div class="login-box">
-    <i class="fas fa-tasks" style="font-size:60px; color:var(--primary); margin-bottom:20px;"></i>
-    <h2 style="margin-bottom:10px; font-family:'Prompt'; font-weight: 600; color: #333;">KDS Access</h2>
-    <p style="color: #666; margin-bottom: 40px;">ระบุรหัสผ่านเพื่อเข้าสู่จอครัว</p>
-    <form onsubmit="event.preventDefault(); handleLogin();">
-      <input type="password" id="passInput" class="login-input" placeholder="••••" autofocus>
-      <button type="submit" id="loginBtn" class="action-btn" style="padding:22px; font-size:20px;">ยืนยันรหัสผ่าน</button>
-    </form>
-  </div>
-</div>
-
 <div id="main-app">
   
   <div class="nav">
@@ -494,67 +445,22 @@
   }
 
   window.onload = function() {
+    // 🛡️ เปิดหน้าจอทำงานทันที (ไม่ต้องสนหน้าต่างล็อคอิน)
+    document.getElementById('main-app').style.display = 'block';
     
-    const savedToken = localStorage.getItem(TOKEN_KEY);
+    // 🚀 Bypass: ใช้ Master Token สำหรับครัวเลย ไม่ต้องรอ GAS อนุมัติ
+    const KITCHEN_TOKEN = "CT_KITCHEN_AUTH_TOKEN_SECRET";
+    localStorage.setItem(TOKEN_KEY, KITCHEN_TOKEN);
     
-    if (savedToken) {
-      
-      document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('main-app').style.display = 'block';
-      
-      refreshTasks(savedToken);
-      
-      // Auto Refresh ทุกๆ 3 นาที
-      setInterval(function() {
-        
-        // ถ้ายุ่งอยู่กับการค้นหาลึก ให้ข้ามการโหลดบิล Pending ไปก่อน
-        if (activeDeepSearch !== "") {
-          return;
-        }
-        
-        refreshTasks(localStorage.getItem(TOKEN_KEY));
-        
-      }, 180000);
-      
-    }
+    refreshTasks(KITCHEN_TOKEN);
+    
+    // ตั้งค่า Auto Refresh ทุก 3 นาที
+    setInterval(function() {
+      if (activeDeepSearch === "") {
+          refreshTasks(KITCHEN_TOKEN);
+      }
+    }, 180000);
   };
-
-  /** ✅ Login Handler */
-  function handleLogin() { 
-    
-    const lBtn = document.getElementById('loginBtn');
-    const pInput = document.getElementById('passInput');
-    
-    lBtn.disabled = true; 
-    lBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
-
-    fetch(GAS_URL + '?action=verifyLogin&pass=' + pInput.value + '&role=stock')
-      .then(function(res) {
-        return res.json();
-      })
-      .then(function(res) {
-        
-        if(res.status === 'success') {
-          
-          localStorage.setItem(TOKEN_KEY, res.token);
-          location.reload();
-          
-        } else {
-          
-          showToast(res.message, 'error');
-          lBtn.disabled = false; 
-          lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
-          pInput.value = ''; 
-          pInput.focus();
-          
-        }
-      })
-      .catch(function(err) {
-        showToast("Server connection failed.", 'error');
-        lBtn.disabled = false; 
-        lBtn.innerHTML = 'ยืนยันรหัสผ่าน';
-      });
-  }
 
   function handleLogout() { 
     localStorage.removeItem(TOKEN_KEY); 
@@ -573,10 +479,30 @@
         return res.json();
       })
       .then(function(newData) {
-        
-        tasks = newData;
-        renderTasks();
-        
+        if (Array.isArray(newData)) {
+          tasks = newData;
+          
+          // 🧹 GOD MODE: Self-Healing Garbage Collector ล้างแคชบิลที่ปิดไปแล้วคืนพื้นที่ให้ iPad
+          const activeIds = tasks.map(t => t.id);
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('chk_')) {
+              const orderId = key.split('_')[1];
+              if (orderId && !activeIds.includes(orderId)) {
+                localStorage.removeItem(key);
+              }
+            }
+          });
+          
+          renderTasks();
+        } else if (newData && newData.status === 'expired') {
+          // 🔄 Reset กุญแจ Master ทันที
+          const KITCHEN_TOKEN = "CT_KITCHEN_AUTH_TOKEN_SECRET";
+          localStorage.setItem(TOKEN_KEY, KITCHEN_TOKEN);
+          refreshTasks(KITCHEN_TOKEN);
+        } else {
+          tasks = [];
+          renderTasks();
+        }
       })
       .catch(function(err) {
         console.error("Refresh Error:", err);

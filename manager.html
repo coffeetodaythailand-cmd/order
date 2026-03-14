@@ -106,34 +106,47 @@
     /* ซ่อน Mobile Elements ในจอคอม */
     .mobile-nav, .sidebar-overlay { display: none; }
   </style>
+  
+  <!-- 🔥 Firebase SDK (ย้ายระบบ Login มาที่นี่) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9p-JEXH95pjW6H5IkkHR3O7hkJuxg7v8",
+      authDomain: "coffeetoday-db.firebaseapp.com",
+      projectId: "coffeetoday-db",
+      storageBucket: "coffeetoday-db.firebasestorage.app",
+      messagingSenderId: "949270145151",
+      appId: "1:949270145151:web:ae6cbc6c5c5d54a502b74a"
+    };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const db = firebase.firestore();
+  </script>
 </head>
 <body>
 
 <div id="login-overlay">
-  <div class="login-box">
-    <div style="margin-bottom: 15px;">
-      <i class="fas fa-shield-alt"></i>
+  <div class="pin-container">
+    <div style="margin-bottom: 35px;">
+      <div style="display:inline-block; background: rgba(169, 29, 58, 0.15); padding: 18px; border-radius: 50%; margin-bottom: 15px;">
+        <i class="fas fa-lock" style="color: var(--red); font-size: 24px;"></i>
+      </div>
+      <h2 style="color: #FFFFFF; font-family: 'Prompt'; font-size: 22px; margin: 0 0 5px 0; font-weight: 400; letter-spacing: 1px;">Manager Access</h2>
+      <p style="color: #888888; font-size: 13px; margin: 0;">กรุณาระบุรหัสผ่านเพื่อเข้าสู่ระบบ</p>
     </div>
-    <div class="login-header">Database Unlocked</div>
-    <div class="login-sub">CoffeeToday Management System Terminal</div>
-    <form onsubmit="event.preventDefault(); handleLogin();">
-      <input 
-        type="password" 
-        id="passInput" 
-        class="login-input" 
-        placeholder="••••" 
-        maxlength="4"
-        autofocus
-      >
-      <button 
-        type="submit" 
-        id="loginBtn" 
-        class="btn btn-red" 
-        style="width:100%; padding:22px; font-size:18px; border-radius: 22px;"
-      >
-        <i class="fas fa-key"></i> UNLOCK SYSTEM
-      </button>
-    </form>
+    
+    <div class="pin-indicators" id="pinIndicators">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <div class="numpad">
+      <button class="num-btn" onclick="addPin('1')">1</button><button class="num-btn" onclick="addPin('2')">2</button><button class="num-btn" onclick="addPin('3')">3</button>
+      <button class="num-btn" onclick="addPin('4')">4</button><button class="num-btn" onclick="addPin('5')">5</button><button class="num-btn" onclick="addPin('6')">6</button>
+      <button class="num-btn" onclick="addPin('7')">7</button><button class="num-btn" onclick="addPin('8')">8</button><button class="num-btn" onclick="addPin('9')">9</button>
+      <div></div>
+      <button class="num-btn" onclick="addPin('0')">0</button>
+      <button class="num-btn del-btn" onclick="removePin()"><i class="fas fa-backspace"></i></button>
+    </div>
   </div>
 </div>
 
@@ -296,7 +309,7 @@
               id="orderSearch" 
               class="search-input" 
               placeholder="พิมพ์ชื่อ, เลขบิล (เช่น 1), สาขา, เบอร์โทร..." 
-              oninput="pgNum=1; renderTable();"
+              oninput="handleOrderSearch()"
             >
           </div>
           <div style="display:flex; gap:10px;">
