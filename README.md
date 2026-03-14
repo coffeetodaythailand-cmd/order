@@ -1,53 +1,42 @@
-# 🧠 AI MEMORY CONTEXT: CoffeeToday Project
+# ☕ CoffeeToday - Order & Management System
 
-> **Last Updated:** 12 March 2026
-> **Status:** 🟢 Ready for Migration (All Systems Go)
-> **Role:** Gemini Code Assist (Senior Engineer Persona)
+> **Last Updated:** 14 March 2026
+> **Version:** 2.5 (God-Mode Edition & Hybrid Auth)
 
-## 🎯 Current Context (บริบทล่าสุด)
-เรากำลังพัฒนา Web Application สำหรับระบบสั่งกาแฟ **CoffeeToday** โดยเน้นความเสถียรและการใช้งานจริงหน้าสาขา
+## 🎯 ภาพรวมระบบ (System Overview)
+ระบบรับออเดอร์ บริหารจัดการสต็อก และแผงควบคุมสำหรับร้าน CoffeeToday
+ถูกพัฒนาด้วย HTML/JS/CSS แบบไร้รอยต่อ (Vanilla) เพื่อความเร็วสูงสุด และใช้ฐานข้อมูลผสมผสาน (Hybrid Database) ระหว่าง **Google Apps Script (GAS)** และ **Firebase**
 
-### ✅ สิ่งที่ทำเสร็จแล้ว (Done)
-1.  **Auto-Refresh System (Robust):** 
-    - เปลี่ยนระบบรีเฟรชหน้าจอจากตัวนับถอยหลัง เป็นการเช็ค **Timestamp (เวลาจริง)**
-    - แก้ปัญหา Browser แอบหลับ (Throttling) เมื่อเปิดทิ้งไว้นานๆ
-    - ตั้งเวลาไว้ที่ **30 นาที** (เช็คทุก 10 วินาที)
-2.  **UI Cleanup:** 
-    - **ถอดระบบแปลภาษา (Google Translate)** ออกทั้งหมด ตามคำสั่งบอส เพื่อให้หน้าจอคลีนและไม่รก
-    - จัดการ Layout หน้าจอทั้ง Desktop และ Mobile ให้สมดุล
-3.  **Deployment:**
-    - อัปโหลดโค้ดทั้งหมดขึ้น **GitHub** เรียบร้อยแล้ว
-    - ไฟล์ HTML หลัก: `odfc.html` (ลูกค้าทั่วไป), `odsc.html` (เช็คสต็อก)
-    - ไฟล์ระบบหลังบ้าน: `manager.html` (จัดการ), `stock.html` (ครัว)
-4.  **Email System (Backend):**
-    - สร้างไฟล์ `Code.gs` เพื่อสำรองโค้ด Google Apps Script
-    - **[Completed]** บันทึกไฟล์ `Code.gs` เวอร์ชัน Nitro Speed เรียบร้อย (Cleaned & Fixed)
-    - แก้ไขข้อความติดต่อเป็น "ติดต่อแจ้งปัญหาออเดอร์สินค้า 02-375-6953" และจัดชิดซ้าย
-5.  **Cache Prevention (Frontend Patch):**
-    - แก้ไข `script.js` และ `stock.html` โดยเพิ่มพารามิเตอร์ `&v=[Timestamp]` ใน URL ของ fetch API
-    - ป้องกันปัญหา Browser จำค่าเดิม (Cache Stale Data) ทำให้ข้อมูลรายการอนุมัติหรือผลการค้นหาไม่อัปเดต
-    - ตรวจสอบ Deep Scan ไม่พบขยะแคชในระบบ
-6.  **Architecture Migration:**
-    - แยกส่วนความจำ AI ไปเก็บใน Private Repo (`Ai-BuH`) เพื่อความปลอดภัยและย้ายเครื่องง่าย
-    - สร้างคู่มือการย้ายเครื่อง (`MIGRATION_GUIDE.md`) และบันทึก Log การทำงาน (`SESSION_LOGS.md`)
+### 🚀 ฟีเจอร์ล่าสุด (Latest Features)
+- **Unified Order Interface:** ยุบรวมหน้าลูกค้าและพนักงานเป็นไฟล์เดียว `order.html` (แยกโหมดการทำงานด้วย URL Parameter อย่างชาญฉลาด)
+- **Hybrid Authentication:** เข้าสู่ระบบ Manager และ KDS ด้วยรหัส PIN 4 หลักผ่าน Firebase (ความเร็ว 0.1 วินาที) พร้อมระบบส่งประวัติการเข้าสู่ระบบไปเก็บที่ Google Sheets แบบเบื้องหลัง (Background Audit)
+- **Offline-Resilient KDS:** หน้าจอครัว (KDS) แบบ Kiosk Mode รองรับการรีเฟรชข้อมูลอัตโนมัติและแก้ปัญหาเน็ตหลุดได้เอง (Self-Healing)
+- **Future-Proofed:** ป้องกันภัยคุกคาม XSS, ป้องกันปัญหา Memory Leak บน iPad, และป้องกันหน้าเว็บค้างจากการโหลดข้อมูลมหาศาล
 
-### 📂 Documentation
-- **Project Notes:** บันทึกการแก้ไขอย่างละเอียดและประวัติแชทอยู่ในไฟล์ `SESSION_LOGS.md` (ใน Repo นี้) หรือ `project_notes.md` (ในเครื่อง)
+---
 
-### ⚙️ Technical Stack
-- **Frontend:** HTML5, CSS3 (Modern/Glassmorphism), Vanilla JS
-- **Backend/DB:** Firebase Firestore (Realtime Database)
-- **API/Backup:** Google Apps Script (เชื่อมออเดอร์ลง Google Sheets)
+## 🔗 วิธีเข้าใช้งานหน้าสั่งสินค้า (URL Parameters)
+ระบบได้ยุบรวมหน้าสั่งของลูกค้าและหน้าเช็คสต็อกไว้ในไฟล์เดียว (`order.html`) เพื่อความคลีนและง่ายต่อการดูแลรักษา โดยใช้การต่อท้ายลิ้งก์ (URL Parameter) ในการแยกโหมดการทำงาน:
 
-## 📥 วิธีติดตั้ง / ย้ายเครื่องใหม่ (How to Pull)
+1. **🛒 โหมดลูกค้าทั่วไป (ค่าเริ่มต้น):** 
+   - **ลิ้งก์:** `https://.../order.html?branch=fc` (หรือเปิด `order.html` ตรงๆ ก็ได้)
+   - **การทำงาน:** จะแสดงเฉพาะหมวดหมู่ที่ตั้งค่าเป็น "หน้าปกติ" และ "ทั้งคู่" (จะซ่อนหมวดหมู่ล็อคสต็อกไว้เพื่อไม่ให้ลูกค้างง)
 
-### 1. ดึงความจำ AI (สำคัญที่สุด!) 🧠
-```bash
-git clone https://github.com/bellybabor0123-debug/Ai-BuH.git
-```
-*เปิดไฟล์ `MEMORY.md` ในโฟลเดอร์นี้ แล้วก๊อปข้อความมาคุยกับผม ผมจะจำได้ทันที*
+2. **📦 โหมดเช็คสต็อก (สำหรับพนักงาน/KDS):**
+   - **ลิ้งก์:** `https://.../order.html?branch=sc`
+   - **การทำงาน:** จะแสดงเฉพาะหมวดหมู่ที่ตั้งค่าเป็น "หน้าล็อคสต็อก" และ "ทั้งคู่" (ซ่อนหมวดลูกค้า) **และจะบังคับให้พนักงานต้องกรอกช่อง "คงเหลือ" เสมอก่อนกดสั่ง**
 
-### 2. ดึงโปรเจคกาแฟ (Source Code) ☕
+---
+
+## ⚙️ โครงสร้างไฟล์หลัก (Core Architecture)
+- `order.html` : หน้าสั่งสินค้า (รองรับทั้งลูกค้าและพนักงานเช็คสต็อก)
+- `manager.html` : แผงควบคุม (Dashboard) สำหรับผู้จัดการ (เข้าสู่ระบบด้วย PIN 4 หลัก)
+- `stock.html` : หน้าจอ KDS สำหรับห้องครัว (เข้าสู่ระบบอัตโนมัติ/Kiosk Mode)
+- `script.js` : สมองกลหลัก (Core Logic Engine) ของระบบหน้าบ้านทั้งหมด
+- `style.css` : ระบบจัดการดีไซน์ (Premium Minimalist UI)
+- `Code.gs` : โค้ดฝั่งเซิร์ฟเวอร์สำหรับ Google Apps Script (สำรองไว้ดูและอัปเดต)
+
+## 📥 การดึงโปรเจค (Pull Request)
 ```bash
 # ดึงโปรเจคหลัก (Order System)
 git clone https://github.com/coffeetodaythailand-cmd/order.git
