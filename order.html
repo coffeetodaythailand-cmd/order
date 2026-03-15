@@ -284,9 +284,14 @@
 </div>
 
 <script>
-  // 🚀 อ่านค่าสาขาจาก URL: ?branch=fc (ลูกค้าปกติ) หรือ ?branch=sc (เช็คสต็อก)
+  // 🚀 ระบบ Routing: ลิ้งก์หลัก order.html คือหน้าปกติ, ถ้ามี ?branch=sc คือหน้าล็อค (พนักงาน)
   const urlParams = new URLSearchParams(window.location.search);
-  const branchType = urlParams.get('branch') || 'fc'; // Default เป็นลูกค้าปกติ (fc)
+  const isStaffMode = urlParams.get('branch') === 'sc';
+  
+  // 🛡️ ถ้าใครเผลอเข้า ?branch=fc ระบบจะลบพารามิเตอร์ทิ้ง ให้กลายเป็นหน้าปกติทันที
+  if (urlParams.get('branch') === 'fc') {
+      window.history.replaceState(null, '', window.location.pathname);
+  }
 
   let pD = null, appData = null, allProducts = [];
   let currentPage = 1;
@@ -366,12 +371,24 @@
   // 🔄 แปลงข้อมูลให้เข้ากับโครงสร้างหน้าเว็บ
   function transformToAppData(csvArray) {
      const categories = [], products = {}, categorySettings = {};
+     
+     // 🛡️ ฟังก์ชันช่วยค้นหา Key แบบ Case-Insensitive รองรับชื่อหัวตารางที่หลากหลาย
+     const findValue = (obj, possibleKeys) => {
+         for (let key in obj) {
+             if (possibleKeys.includes(key.toLowerCase().trim())) return obj[key] ? obj[key].trim() : null;
+         }
+         return null;
+     };
+
      csvArray.forEach(item => {
-         const cat = item['Category'] || 'Uncategorized';
-         const name = item['ProductName'];
-         const status = item['Status'] || 'Active';
-         const display = item['Display'] || 'both'; // ดึงจากคอลัมน์ Display หรือตั้งค่าเริ่มต้น
-         if (!categories.includes(cat)) { categories.push(cat); products[cat] = []; categorySettings[cat] = display; }
+         const cat = findValue(item, ['category', 'หมวดหมู่']) || 'Uncategorized';
+         const name = findValue(item, ['productname', 'ชื่อสินค้า']);
+         const status = findValue(item, ['status', 'สถานะ']) || 'Active';
+         // 🎯 แม้หัวตารางจะชื่อ Stock โค้ดก็จะดึงมาเป็นป้ายกำกับได้ถูกต้อง
+         let display = findValue(item, ['stock', 'display', 'displaytag']) || 'both';
+         display = String(display).toLowerCase().trim();
+
+         if (!categories.includes(cat)) { categories.push(cat); products[cat] = []; categorySettings[cat] = display; } else if (display !== 'both' && categorySettings[cat] === 'both') { categorySettings[cat] = display; }
          if (name) { products[cat].push({ name: name, status: status }); }
      });
      return { categories, products, categorySettings };
@@ -381,21 +398,37 @@
     const t = document.getElementById('tabs');
     t.innerHTML = "";
 
-    let isFirstRender = true;
     if (initData.categories) {
       initData.categories.forEach((c, i) => {
-        const displayTag = (initData.categorySettings && initData.categorySettings[c]) ? initData.categorySettings[c] : 'both';
+        const displayTag = (initData.categorySettings && initData.categorySettings[c]) ? String(initData.categorySettings[c]).toLowerCase().trim() : 'both';
         
-        // 🛡️ ระบบกรองหมวดหมู่ด้วย URL Parameter
-        if (branchType === 'fc' && displayTag === 'locked') return; // หน้าปกติ (fc) ซ่อนหมวด locked
-        if (branchType === 'sc' && displayTag === 'normal') return; // หน้าเช็คสต็อก (sc) ซ่อนหมวด normal
+        // 🛡️ ระบบกรองหมวดหมู่ (หน้าปกติ vs หน้าล็อค)
+        const isLockedForStaff = ['locked', 'sc', 'staff', 'หน้าล็อค', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก'].includes(displayTag);
+        const isNormalForCust = ['normal', 'fc', 'customer', 'หน้าปกติ'].includes(displayTag);
+        
+        if (!isStaffMode && isLockedForStaff) return; // หน้าปกติ ซ่อนหมวดล็อค
+        if (isStaffMode && isNormalForCust) return;   // หน้าล็อค ซ่อนหมวดปกติ
+
+        // 🛡️ DEV GOD LOGIC: ซ่อนหมวดหมู่ที่ไม่มีสินค้า (หรือมีแต่ถูกปรับสถานะซ่อนไว้ทั้งหมด)
+        const productsInCat = initData.products[c] || [];
+        const activeProducts = productsInCat.filter(p => p.status !== 'Inactive');
+        if (activeProducts.length === 0) return; // ข้ามการสร้างแท็บหมวดหมู่นี้ไปเลย
 
         const b = document.createElement('button');
-        b.className = `tab-btn tbtn ${isFirstRender ? 'active' : ''}`;
+        b.className = `tab-btn tbtn`;
         b.innerText = c;
         b.dataset.categoryName = c;
         b.onclick = () => {
           document.getElementById('productSearchInput').value = '';
+          
+          // 🛡️ DEV GOD LOGIC: ถ้ากดแท็บเดิมซ้ำ ให้ทำการ "หุบเก็บ" (Toggle Collapse)
+          if (currentView.type === 'category' && currentView.value === c) {
+            b.classList.remove('active');
+            currentView = { type: 'category', value: '' };
+            renderProducts();
+            return;
+          }
+
           document.querySelectorAll('.tbtn').forEach(x => x.classList.remove('active'));
           b.classList.add('active');
           document.getElementById('sec-others').classList.remove('active');
@@ -404,20 +437,26 @@
           renderProducts();
         };
         t.appendChild(b);
-        if (isFirstRender) {
-          currentView.value = c;
-          isFirstRender = false;
-        }
       });
     }
 
     const oB = document.createElement('button'); oB.className='tab-btn tbtn'; oB.innerText='รายการอื่นๆ (พิมพ์ระบุ)';
     oB.onclick = () => {
+      // 🛡️ DEV GOD LOGIC: หุบเก็บสำหรับแท็บรายการอื่นๆ
+      if (oB.classList.contains('active')) {
+        oB.classList.remove('active');
+        document.getElementById('sec-others').classList.remove('active');
+        currentView = { type: 'category', value: '' };
+        renderProducts();
+        return;
+      }
+
       document.querySelectorAll('.tbtn').forEach(x => x.classList.remove('active'));
       oB.classList.add('active');
       document.getElementById('view-controls').style.display = 'none';
       document.getElementById('lists').innerHTML = '';
       document.getElementById('sec-others').classList.add('active');
+      currentView = { type: 'other', value: '' };
     };
     t.appendChild(oB);
     addRow();
@@ -429,6 +468,8 @@
       renderProducts();
     });
 
+    // 🛡️ เคลียร์ค่าเริ่มต้น ไม่ให้เลือกหมวดหมู่ใดๆ เลย (Clean Initial State)
+    currentView = { type: 'category', value: '' };
     renderProducts();
   } 
 
@@ -448,9 +489,12 @@
       
       // กรองหมวดหมู่อีกชั้นตอนค้นหาด้วย
       productsToRender = productsToRender.filter(p => {
-        const displayTag = (appData.categorySettings && appData.categorySettings[p.category]) ? appData.categorySettings[p.category] : 'both';
-        if (branchType === 'fc' && displayTag === 'locked') return false;
-        if (branchType === 'sc' && displayTag === 'normal') return false;
+        const displayTag = (appData.categorySettings && appData.categorySettings[p.category]) ? String(appData.categorySettings[p.category]).toLowerCase().trim() : 'both';
+        const isLockedForStaff = ['locked', 'sc', 'staff', 'หน้าล็อค', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก'].includes(displayTag);
+        const isNormalForCust = ['normal', 'fc', 'customer', 'หน้าปกติ'].includes(displayTag);
+        
+        if (!isStaffMode && isLockedForStaff) return false;
+        if (isStaffMode && isNormalForCust) return false;
         return true;
       });
 
@@ -462,6 +506,12 @@
     }
 
     if (productsToRender.length === 0) {
+      // 🛡️ ถ้ายังไม่ได้เลือกหมวดหมู่ ให้โชว์หน้าจอว่างๆ คลีนๆ
+      if (currentView.type === 'category' && currentView.value === '') {
+        listsContainer.innerHTML = '';
+        controlsContainer.style.display = 'none';
+        return;
+      }
       listsContainer.innerHTML = `<div class="loading-container" style="padding: 40px 0;"><i class="fas fa-box-open" style="font-size: 30px; margin-bottom: 15px;"></i> ไม่พบรายการสินค้า</div>`;
       controlsContainer.style.display = 'none';
       return;
@@ -527,8 +577,8 @@
     for (let i = 0; i < qis.length; i++) {
       let qVal = parseFloat(qis[i].value) || 0;
       if (qVal > 0) {
-        // 🛡️ ถ้าเป็นหน้าเช็คสต็อก (sc) บังคับกรอกช่องคงเหลือ
-        if (branchType === 'sc' && !sis[i].value.trim()) {
+          // 🛡️ หน้าล็อค (sc): บังคับกรอกช่องสต็อกคงเหลือ
+          if (isStaffMode && !sis[i].value.trim()) {
           sis[i].focus(); sis[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
           return showError(`กรุณาใส่สต็อกของ: ${qis[i].dataset.n}`);
         }
@@ -543,8 +593,8 @@
     for (let i = 0; i < cqs.length; i++) {
       let qVal = parseFloat(cqs[i].value) || 0; let n = cns[i].value.trim();
       if (n && qVal > 0) {
-        // 🛡️ ถ้าเป็นหน้าเช็คสต็อก (sc) บังคับกรอกช่องคงเหลือในรายการพิเศษด้วย
-        if (branchType === 'sc' && !css[i].value.trim()) {
+          // 🛡️ หน้าล็อค (sc): บังคับกรอกช่องสต็อกคงเหลือในรายการพิเศษด้วย
+          if (isStaffMode && !css[i].value.trim()) {
           css[i].focus(); css[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
           return showError(`กรุณาใส่สต็อกของ: ${n}`);
         }

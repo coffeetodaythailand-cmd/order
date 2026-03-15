@@ -212,28 +212,6 @@
           <p style="color: #888; font-size: 14px;">ภาพรวมสถิติและการอนุมัติงาน</p>
         </div>
 
-        <div class="card approve-card" id="approveCard" style="display:none; margin-bottom: 35px;">
-          <div class="section-header" style="margin-bottom: 15px;">
-            <h4 class="section-title" style="color: var(--green); font-size: 18px;">
-              <i class="fas fa-check-double"></i> อนุมัติการส่งมอบ (Approve Queue)
-            </h4>
-          </div>
-          <div id="approveList" class="approve-list" style="margin-bottom: 20px;"></div>
-          
-          <div class="pagination-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
-            <div style="margin-right: auto; color: #999; font-size: 12px;">รายการรออนุมัติ</div>
-            <span style="font-size: 12px; color: #666;">แสดง:</span>
-            <select id="apRowSel" class="styled-select" onchange="apChangeLimit()" style="padding: 5px 8px; font-size: 12px; border-radius: 8px;">
-              <option value="5">5 รายการ</option>
-              <option value="15">15 รายการ</option>
-              <option value="30">30 รายการ</option>
-            </select>
-            <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apPrev()"><i class="fas fa-chevron-left"></i></button> 
-            <span id="apPI" style="font-weight:600; min-width:45px; text-align:center; font-size: 13px; font-family: 'Prompt';">1 / 1</span> 
-            <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apNext()"><i class="fas fa-chevron-right"></i></button>
-          </div>
-        </div>
-
         <div class="chart-grid">
           <div class="card" id="mainChartCard">
             <div class="section-header" style="flex-direction: column; align-items: flex-start; gap: 15px;">
@@ -301,6 +279,32 @@
           <p style="color: #888; font-size: 14px;">ประวัติและสถานะออเดอร์ทั้งหมด</p>
         </div>
 
+        <div class="card approve-card" id="approveCard" style="display:none; margin-bottom: 35px;">
+          <div class="section-header" style="margin-bottom: 15px;">
+            <h4 class="section-title" style="color: var(--green); font-size: 18px;">
+              <i class="fas fa-check-double"></i> อนุมัติการส่งมอบ (Approve Queue)
+            </h4>
+          </div>
+          <div id="approveList" class="approve-list" style="margin-bottom: 20px;"></div>
+          
+          <div class="pagination-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+            <div style="margin-right: auto; color: #999; font-size: 12px;">รายการรออนุมัติ</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #666;">แสดง:</span>
+              <select id="apRowSel" class="styled-select" onchange="apChangeLimit()" style="padding: 5px 8px; font-size: 12px; border-radius: 8px;">
+                <option value="5">5 รายการ</option>
+                <option value="15">15 รายการ</option>
+                <option value="30">30 รายการ</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apPrev()"><i class="fas fa-chevron-left"></i></button> 
+              <span id="apPI" style="font-weight:600; min-width:45px; text-align:center; font-size: 13px; font-family: 'Prompt';">1 / 1</span> 
+              <button class="page-btn" style="width: 32px; height: 32px; border-radius: 10px;" onclick="apNext()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+
         <div class="search-row" style="margin-bottom: 25px;">
           <div style="flex:1; display:flex; align-items:center; gap:12px;">
             <i class="fas fa-search" style="color:#BBBBBB; font-size:15px;"></i>
@@ -359,16 +363,20 @@
             <div style="margin-right: auto; color: #999; font-size: 13px;">
               แสดงข้อมูลออเดอร์ในระบบ
             </div>
-            <span style="font-size: 13px; color: #666;">Rows per page:</span>
-            <select id="rowSel" class="styled-select" onchange="changeLimit()">
-              <option value="8">8 รายการ</option>
-              <option value="15">15 รายการ</option>
-              <option value="30">30 รายการ</option>
-              <option value="50">50 รายการ</option>
-            </select>
-            <button class="page-btn" onclick="prev()"><i class="fas fa-chevron-left"></i></button> 
-            <span id="pI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
-            <button class="page-btn" onclick="next()"><i class="fas fa-chevron-right"></i></button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 13px; color: #666;">Rows per page:</span>
+              <select id="rowSel" class="styled-select" onchange="changeLimit()">
+                <option value="8">8 รายการ</option>
+                <option value="15">15 รายการ</option>
+                <option value="30">30 รายการ</option>
+                <option value="50">50 รายการ</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button class="page-btn" onclick="prev()"><i class="fas fa-chevron-left"></i></button> 
+              <span id="pI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
+              <button class="page-btn" onclick="next()"><i class="fas fa-chevron-right"></i></button>
+            </div>
           </div>
         </div>
       </section>
@@ -401,25 +409,31 @@
 
         <div id="catChips" class="chips-container"></div>
         
-        <div id="menuItems" class="card" style="padding: 15px 40px; min-height: 120px; border-top: 6px solid var(--red);">
-          <div style="text-align:center; padding:40px; color:#CCC;">กรุณาเลือกหมวดหมู่...</div>
-        </div>
-
-        <!-- 🚀 Pagination for Menu Items -->
-        <div id="menuPagination" class="pagination-footer" style="display: none; margin-top: -15px; border-top: none; padding: 0 20px 20px 20px; background: white; border-radius: 0 0 var(--card-radius) var(--card-radius); box-shadow: var(--shadow-soft);">
-          <div style="margin-right: auto; color: #999; font-size: 13px;">
-            แสดงรายการสินค้า
+        <div class="card" style="padding: 0; overflow: hidden; border-top: 6px solid var(--red);">
+          <div id="menuItems" style="padding: 15px 40px; min-height: 120px;">
+            <div style="text-align:center; padding:40px; color:#CCC;">กรุณาเลือกหมวดหมู่...</div>
           </div>
-          <span style="font-size: 13px; color: #666;">แสดง:</span>
-          <select id="menuRowSel" class="styled-select" onchange="menuChangeLimit()">
-            <option value="10" selected>10 รายการ</option>
-            <option value="15">15 รายการ</option>
-            <option value="20">20 รายการ</option>
-            <option value="999">ทั้งหมด</option>
-          </select>
-          <button class="page-btn" onclick="menuPrev()"><i class="fas fa-chevron-left"></i></button> 
-          <span id="menuPI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
-          <button class="page-btn" onclick="menuNext()"><i class="fas fa-chevron-right"></i></button>
+
+          <!-- 🚀 Pagination for Menu Items -->
+          <div id="menuPagination" class="pagination-footer" style="display: none; padding: 15px 25px; margin: 0; background: #FAFAFA; border-top: 1px solid #E5E7EB; border-radius: 0;">
+            <div style="margin-right: auto; color: #999; font-size: 13px;">
+              แสดงรายการสินค้า
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 13px; color: #666;">แสดง:</span>
+              <select id="menuRowSel" class="styled-select" onchange="menuChangeLimit()">
+                <option value="10" selected>10 รายการ</option>
+                <option value="15">15 รายการ</option>
+                <option value="20">20 รายการ</option>
+                <option value="999">ทั้งหมด</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button class="page-btn" onclick="menuPrev()"><i class="fas fa-chevron-left"></i></button> 
+              <span id="menuPI" style="font-weight:600; min-width:50px; text-align:center;">1 / 1</span> 
+              <button class="page-btn" onclick="menuNext()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -468,71 +482,47 @@
   </div>
 </div>
 
-<div id="cM" class="overlay">
-  <div class="modal-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
-      <h3 style="margin:0; font-family:'Prompt';">สร้างหมวดหมู่ใหม่</h3>
-      <i class="fas fa-folder-open" style="color:var(--red); font-size:20px;"></i>
+<!-- 1. Modal สร้างหมวดหมู่ใหม่ -->
+<div id="cM" class="premium-overlay" style="display:none;">
+  <div class="premium-modal">
+    <div class="modal-header"><h3>✨ สร้างหมวดหมู่ใหม่</h3><button class="close-btn" onclick="closeM('cM')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <label>ชื่อหมวดหมู่</label>
+      <input type="text" id="cN" class="premium-input" placeholder="เช่น เครื่องดื่มเย็น, ของหวาน...">
     </div>
-    <label style="font-size:12px; color:#999; margin-bottom:8px; display:block;">ชื่อหมวดหมู่สินค้า</label>
-    <input type="text" id="cN" class="login-input" style="font-size:18px; text-align:left; padding:15px 25px;" placeholder="ระบุชื่อหมวดหมู่ เช่น กาแฟ TD...">
-    <div style="display:flex; gap:15px; margin-top:10px;">
-      <button class="btn" style="flex:1; background-color:#F5F5F5;" onclick="closeM('cM')">กลับ</button>
-      <button class="btn btn-red" style="flex:1;" onclick="saveCat()">บันทึกข้อมูล</button>
-    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeM('cM')">ยกเลิก</button><button class="btn-primary" onclick="saveCat()">บันทึกหมวดหมู่</button></div>
   </div>
 </div>
 
-<div id="pM" class="overlay">
-  <div class="modal-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
-      <h3 style="margin:0; font-family:'Prompt';">ข้อมูลรายการสินค้า</h3>
-      <i class="fas fa-tag" style="color:var(--red); font-size:20px;"></i>
+<!-- 2. Modal เพิ่ม/แก้ไข สินค้า -->
+<div id="pM" class="premium-overlay" style="display:none;">
+  <div class="premium-modal">
+    <div class="modal-header"><h3>📦 จัดการสินค้า</h3><button class="close-btn" onclick="closeM('pM')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <label>ชื่อสินค้า</label>
+      <input type="text" id="pN" class="premium-input" placeholder="เช่น อเมริกาโน่เย็น">
+      <label style="margin-top: 15px;">หมวดหมู่</label>
+      <select id="pCatSelect" class="premium-input" style="cursor: pointer;"></select>
     </div>
-    
-    <div style="margin-bottom:20px;">
-      <label style="font-size:11px; color:#AAAAAA; text-transform:uppercase; font-weight:bold;">หมวดหมู่หลัก</label>
-      <select id="pCatSelect" class="login-input" style="font-size:16px; margin-top:8px; padding:15px; text-align:left;"></select>
-    </div>
-    
-    <div style="margin-bottom:30px;">
-      <label style="font-size:11px; color:#AAAAAA; text-transform:uppercase; font-weight:bold;">ชื่อสินค้า / ขนาดบรรจุ</label>
-      <input type="text" id="pN" class="login-input" style="font-size:16px; margin-top:8px; padding:15px; text-align:left;" placeholder="เช่น กาแฟ TD-1 (250g)">
-    </div>
-    
-    <div style="display:flex; gap:15px;">
-      <button class="btn" style="flex:1; background-color:#F5F5F5;" onclick="closeM('pM')">ยกเลิก</button>
-      <button class="btn btn-red" style="flex:1;" onclick="saveP()">บันทึกรายการ</button>
-    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeM('pM')">ยกเลิก</button><button class="btn-primary" onclick="saveP()">บันทึกสินค้า</button></div>
   </div>
 </div>
 
-<div id="editCatModal" class="overlay">
-  <div class="modal-card" style="text-align: center; max-width: 420px; border-top: 15px solid var(--blue);">
-    <div style="margin-bottom: 25px;">
-      <i class="fas fa-edit" style="font-size: 75px; color: var(--blue); filter: drop-shadow(0 5px 15px rgba(52,152,219,0.3));"></i>
+<!-- 3. Modal แก้ไขหมวดหมู่ & ตั้งค่าหน้าโชว์ -->
+<div id="editCatModal" class="premium-overlay" style="display:none;">
+  <div class="premium-modal">
+    <div class="modal-header"><h3>✏️ ตั้งค่าหมวดหมู่</h3><button class="close-btn" onclick="closeM('editCatModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <label>ชื่อหมวดหมู่</label>
+      <input type="text" id="editCatInput" class="premium-input" placeholder="พิมพ์ชื่อหมวดหมู่...">
+      <label style="margin-top: 20px;">สิทธิ์การแสดงผล</label>
+      <div class="radio-group-modern">
+        <label class="radio-card"><input type="radio" name="catDisplay" value="normal"><div class="card-content"><i class="fas fa-store"></i><span>หน้าร้าน<br>(ลูกค้า)</span></div></label>
+        <label class="radio-card"><input type="radio" name="catDisplay" value="locked"><div class="card-content"><i class="fas fa-lock"></i><span>หน้าหลังบ้าน<br>(พนักงาน)</span></div></label>
+        <label class="radio-card"><input type="radio" name="catDisplay" value="both"><div class="card-content"><i class="fas fa-eye"></i><span>แสดงทุกที่<br>(ทั้งหมด)</span></div></label>
+      </div>
     </div>
-    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">แก้ไขชื่อหมวดหมู่</h2>
-    
-    <p style="color: #777; margin: 15px 0 5px; font-size: 14px;">พิมพ์ชื่อใหม่ที่ต้องการเปลี่ยน</p>
-    <input type="text" id="editCatInput" class="login-input" style="font-size:22px; text-align:center; padding:15px; margin-bottom: 20px; border-color: var(--blue);">
-    
-    <p style="color: #777; margin: 10px 0 10px; font-size: 14px; font-weight: bold;">แสดงผลที่หน้าสั่งสินค้า:</p>
-    <div class="display-options-group" style="margin-bottom: 25px;">
-      <input type="radio" id="cat_normal" name="catDisplay" value="normal">
-      <label for="cat_normal">หน้าปกติ</label>
-      
-      <input type="radio" id="cat_locked" name="catDisplay" value="locked">
-      <label for="cat_locked">หน้าล็อคสต็อก</label>
-      
-      <input type="radio" id="cat_both" name="catDisplay" value="both" checked>
-      <label for="cat_both">ทั้งคู่</label>
-    </div>
-
-    <div style="display: flex; gap: 15px;">
-      <button class="btn" style="flex: 1; background-color: #F5F5F5; color: #333;" onclick="closeM('editCatModal')">ยกเลิก</button>
-      <button class="btn" style="flex: 1.5; background-color: var(--blue); color: white;" onclick="executeEditCategory()">บันทึกการแก้ไข</button>
-    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeM('editCatModal')">ยกเลิก</button><button class="btn-primary" onclick="executeEditCategory()">บันทึกการตั้งค่า</button></div>
   </div>
 </div>
   <div id="managerConfirmModal" class="overlay">

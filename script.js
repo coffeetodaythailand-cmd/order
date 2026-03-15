@@ -1022,6 +1022,16 @@ function buildProductRow(p, idx, catName, isDraggable) {
 function renderMenuAccordion(menuData) {
   if (!menuData || !menuData.categories) return;
   menuObj = menuData;
+
+  // 🛡️ Self-Healing: กู้คืนการตั้งค่าหน้าสั่ง (Display Tag) จากไอเท็มลูก หาก Backend (GAS) ไม่ได้ส่ง categorySettings มาให้ตรงๆ
+  if (!menuObj.categorySettings) menuObj.categorySettings = {};
+  menuObj.categories.forEach(cat => {
+    if (!menuObj.categorySettings[cat] && menuObj.grouped[cat] && menuObj.grouped[cat].length > 0) {
+      const displayVal = menuObj.grouped[cat][0].display;
+      if (displayVal) menuObj.categorySettings[cat] = displayVal;
+    }
+  });
+
   let chipsHtml = '',
     itemsHtml = '',
     selectHtml = '';
@@ -1050,11 +1060,23 @@ function renderMenuAccordion(menuData) {
   menuData.categories.forEach((cat, idx) => {
     const isSelected = (cat === currentCat ? 'active' : '');
     selectHtml += `<option value="${cat}">${cat}</option>`;
+    
+    // 🛡️ DEV GOD UI: เพิ่มป้ายกำกับให้บอสเห็นในหน้า Manager ว่าหมวดนี้ตั้งค่าหน้าอะไรไว้
+    const displayTag = (menuData.categorySettings && menuData.categorySettings[cat]) ? String(menuData.categorySettings[cat]).toLowerCase().trim() : 'both';
+    let displayBadge = '';
+    if (['locked', 'sc', 'staff', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก', 'หน้าล็อค'].includes(displayTag)) {
+        displayBadge = '<span style="font-size:10px; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #fca5a5; display:inline-block; margin-top:4px;">(แสดงเฉพาะหน้าพนักงาน ?branch=sc)</span>';
+    } else if (['normal', 'fc', 'customer', 'หน้าปกติ'].includes(displayTag)) {
+        displayBadge = '<span style="font-size:10px; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #bbf7d0; display:inline-block; margin-top:4px;">(แสดงเฉพาะหน้าลูกค้า order.html)</span>';
+    } else {
+        displayBadge = '<span style="font-size:10px; background:#f3f4f6; color:#4b5563; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #d1d5db; display:inline-block; margin-top:4px;">(แสดงทั้งสองหน้า)</span>';
+    }
+
     chipsHtml += `
       <div class="chip ${isSelected}" draggable="true" onclick="selectCat('${cat}')" ondragstart="dragStartCat(event, ${idx})" ondragover="dragOverCat(event, this)" ondragleave="dragLeaveCat(this)" ondrop="dropCat(event, ${idx}, this)" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
         <i class="fas fa-grip-vertical" style="color:#CCC; font-size:13px;"></i>
         <input type="number" value="${idx + 1}" onclick="event.stopPropagation()" onchange="moveCatManual(${idx}, this.value - 1)" style="width:40px; height:26px; padding:0; border:1px solid rgba(0,0,0,0.1); border-radius:6px; text-align:center; font-weight:bold; font-size:13px; background: white; color:var(--red);">
-        <span style="flex:1; margin-left:5px; white-space:normal; word-break:break-word;" title="${cat}">${cat} (${menuData.grouped[cat] ? menuData.grouped[cat].length : 0})</span>
+        <div style="flex:1; margin-left:5px; line-height:1.2;"><span style="white-space:normal; word-break:break-word; font-size:15px; font-weight:bold;" title="${cat}">${cat} (${menuData.grouped[cat] ? menuData.grouped[cat].length : 0})</span><br>${displayBadge}</div>
         <div style="display:flex; gap:10px; align-items:center;">
           <i class="fas fa-edit" style="font-size:14px; color:#CCC; cursor:pointer;" onclick="event.stopPropagation(); openEditCatModal('${cat}')"></i>
           <i class="fas fa-trash-alt" style="font-size:14px; color:#ffb3b3; cursor:pointer;" onclick="event.stopPropagation(); prepareDelete('cat', '${cat}')"></i>
@@ -1258,6 +1280,13 @@ function saveMenuOrder() {
 }
 
 function toggleItem(rowId, productName, category, newStatus) { 
+  // 🛡️ DEV GOD GUARD: ป้องกันพังถ้าย้ายของแล้วยังไม่กดเซฟ
+  if (isUnsaved) {
+    showAlert("⚠️ คุณมีการจัดเรียงเมนูค้างอยู่ กรุณากดปุ่ม 'บันทึกลำดับ' (สีส้ม) ด้านบนให้เสร็จก่อนเปลี่ยนสถานะสินค้าครับ!");
+    renderMenuAccordion(menuObj); // รีเซ็ต select ให้กลับไปค่าเดิม
+    return;
+  }
+
   const adminToken = localStorage.getItem(TOKEN_KEY);
   
   // ส่งสถานะใหม่ (Active/SoldOut/Inactive) ไปที่เซิร์ฟเวอร์
@@ -1278,6 +1307,10 @@ function toggleItem(rowId, productName, category, newStatus) {
 }
 
 function openCatModal() { 
+  if (isUnsaved) {
+    return showAlert("⚠️ กรุณากดปุ่ม 'บันทึกลำดับ' (สีส้ม) ก่อนสร้างหมวดหมู่ใหม่ครับ!");
+  }
+
   document.getElementById('cN').value = ''; 
   document.getElementById('cM').style.display = 'flex'; 
   setTimeout(function() { 
@@ -1308,9 +1341,13 @@ function saveCat() {
 }
 
 function openProdModal(rowId, name, cat) { 
+  if (isUnsaved) {
+    return showAlert("⚠️ กรุณากดปุ่ม 'บันทึกลำดับ' (สีส้ม) ก่อนแก้ไขข้อมูลสินค้า เพื่อป้องกันข้อมูลสลับบรรทัดครับ!");
+  }
+
   editTargetId = (rowId || null); 
   document.getElementById('pN').value = (name || ''); 
-  document.getElementById('pCatSelect').value = (cat || (menuObj.categories ? menuObj.categories[0] : '')); 
+  document.getElementById('pCatSelect').value = (cat || currentCat || (menuObj.categories ? menuObj.categories[0] : '')); 
   const modal = document.getElementById('pM');
   modal.style.display = 'flex'; 
   setTimeout(function() { document.getElementById('pN').focus(); }, 300);
@@ -1593,9 +1630,14 @@ window.openEditCatModal = (catName) => {
     oldCatName = catName;
     document.getElementById('editCatInput').value = catName;
 
-    const currentSetting = (menuObj.categorySettings && menuObj.categorySettings[catName]) 
-                           ? menuObj.categorySettings[catName] 
+    let currentSetting = (menuObj.categorySettings && menuObj.categorySettings[catName]) 
+                           ? String(menuObj.categorySettings[catName]).toLowerCase().trim()
                            : 'both';
+
+    // 🛡️ แปลงค่าในชีต ให้ตรงกับ value ของปุ่ม Radio ในหน้า Manager
+    if (['sc', 'staff', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก', 'หน้าล็อค', 'locked'].includes(currentSetting)) currentSetting = 'locked';
+    else if (['fc', 'customer', 'หน้าปกติ', 'normal'].includes(currentSetting)) currentSetting = 'normal';
+    else currentSetting = 'both';
 
     // 🎯 สั่งให้ปุ่ม Radio ที่มี value ตรงกับค่าเดิม "ถูกเลือก" (Checked)
     const radioToSelect = document.querySelector(`input[name="catDisplay"][value="${currentSetting}"]`);
@@ -1610,7 +1652,8 @@ window.openEditCatModal = (catName) => {
 // ✅ ชุดอัปเกรด: บันทึกค่าปุ่ม Radio (แก้บั๊กชื่อฟังก์ชันแล้ว)
 window.executeEditCategory = () => {
     const newName = document.getElementById('editCatInput').value.trim();
-    const displayType = document.querySelector('input[name="catDisplay"]:checked').value;
+    const displayNode = document.querySelector('input[name="catDisplay"]:checked');
+    const displayType = displayNode ? displayNode.value : 'both';
     
     // กันแค่กรณีลบชื่อจนว่างเปล่า
     if (newName === "") return closeM('editCatModal'); 
@@ -1627,7 +1670,7 @@ window.executeEditCategory = () => {
         
         // ถ้ายกเครื่องเปลี่ยนชื่อใหม่ ให้ย้ายข้อมูลสินค้าตามไปด้วย
         if (newName !== oldCatName) {
-            menuObj.grouped[newName] = menuObj.grouped[oldCatName];
+            menuObj.grouped[newName] = menuObj.grouped[oldCatName] || [];
             delete menuObj.grouped[oldCatName];
         }
         

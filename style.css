@@ -702,7 +702,7 @@ td {
   font-size: 14px; 
   vertical-align: middle; 
   transition: background 0.2s;
-}สัดส่วนการสั่งสินค้าแต่ละสาขา
+}
 
 tr:hover td {
   background-color: #FAFAFA;
@@ -1224,3 +1224,70 @@ td .fa-trash-alt:hover {
     font-size: 16px !important; 
   }
 }
+
+/* 
+   =========================================================================
+   PREMIUM MODAL UI (V17) - DEV GOD FIX
+   =========================================================================
+*/
+.premium-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(17, 19, 21, 0.7); backdrop-filter: blur(8px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+.premium-modal {
+  background: #FFFFFF; width: 90%; max-width: 420px;
+  border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+  overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; border-bottom: 1px solid #F3F4F6; background: #FFF;
+}
+.modal-header h3 { margin: 0; font-family: 'Prompt'; font-size: 18px; color: #1A1C1E; }
+.close-btn {
+  background: #F3F4F6; border: none; width: 32px; height: 32px;
+  border-radius: 50%; color: #6B7280; cursor: pointer; transition: 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.close-btn:hover { background: #E5E7EB; color: #A91D3A; transform: rotate(90deg); }
+.modal-body { padding: 24px; }
+.modal-body label {
+  display: block; font-family: 'Prompt'; font-size: 13px; font-weight: 600;
+  color: #4B5563; margin-bottom: 8px;
+}
+.premium-input {
+  width: 100%; padding: 14px 16px; background: #F9FAFB;
+  border: 1.5px solid #E5E7EB; border-radius: 12px; font-family: 'Sarabun';
+  font-size: 15px; color: #1A1C1E; transition: 0.2s; box-sizing: border-box;
+  outline: none;
+}
+.premium-input:focus {
+  background: #FFFFFF; border-color: #A91D3A; box-shadow: 0 0 0 4px rgba(169, 29, 58, 0.1);
+}
+.modal-footer { padding: 20px 24px; background: #F9FAFB; display: flex; gap: 12px; border-top: 1px solid #F3F4F6; }
+.btn-cancel {
+  flex: 1; padding: 14px; background: #FFFFFF; border: 1.5px solid #E5E7EB;
+  border-radius: 14px; font-family: 'Prompt'; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
+}
+.btn-cancel:hover { background: #F3F4F6; }
+.btn-primary {
+  flex: 1; padding: 14px; background: #A91D3A; border: none;
+  border-radius: 14px; font-family: 'Prompt'; font-weight: 600; color: #FFFFFF; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(169, 29, 58, 0.25);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(169, 29, 58, 0.35); }
+
+/* Radio Cards สุดหรูสำหรับหน้า Edit Category */
+.radio-group-modern { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.radio-card input { display: none; }
+.radio-card .card-content {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 15px 5px; background: #F9FAFB; border: 2px solid #E5E7EB;
+  border-radius: 16px; cursor: pointer; transition: 0.2s; gap: 8px; text-align: center;
+}
+.radio-card .card-content i { font-size: 20px; color: #9CA3AF; transition: 0.2s; }
+.radio-card .card-content span { font-family: 'Sarabun'; font-size: 11px; font-weight: 600; color: #6B7280; line-height: 1.2;}
+.radio-card input:checked + .card-content { background: #FFF0F2; border-color: #A91D3A; box-shadow: 0 4px 12px rgba(169, 29, 58, 0.1); }
+.radio-card input:checked + .card-content i, .radio-card input:checked + .card-content span { color: #A91D3A; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
