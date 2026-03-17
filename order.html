@@ -211,7 +211,14 @@
     <i class="fas fa-search"></i>
   </div>
 
-  <div id="view-controls">
+  <div id="loading-area" class="loading-container">
+    <div class="spinner"></div>
+    <span style="font-size:12px; font-family:'Prompt'; letter-spacing:1px;">กำลังเตรียมเมนู...</span>
+  </div>
+
+  <div id="lists"></div>
+
+  <div id="view-controls" style="margin-top: 15px;">
       <div>
           <span style="font-size: 12px; font-weight: 600; color: #888; margin-right: 5px;">แสดง:</span>
           <button class="page-size-btn active" onclick="setPageSize(this, 8)">8</button>
@@ -224,13 +231,6 @@
           <button class="page-nav-btn" onclick="changePage(1)"><i class="fas fa-chevron-right"></i></button>
       </div>
   </div>
-  
-  <div id="loading-area" class="loading-container">
-    <div class="spinner"></div>
-    <span style="font-size:12px; font-family:'Prompt'; letter-spacing:1px;">กำลังเตรียมเมนู...</span>
-  </div>
-
-  <div id="lists"></div>
 
   <div id="sec-others" class="table-section">
     <h4 style="color:var(--primary); margin:15px 0 5px;"><i class="fas fa-magic"></i> รายการพิเศษอื่นๆ</h4>
@@ -294,6 +294,7 @@
   }
 
   let pD = null, appData = null, allProducts = [];
+  let cartState = {}; // 🚀 สมองความจำ: เก็บตัวเลขตะกร้าไม่ให้หายตอนเปลี่ยนหน้า
   let currentPage = 1;
   let itemsPerPage = 8;
   let currentView = { type: 'category', value: '' }; 
@@ -435,6 +436,7 @@
           currentView = { type: 'category', value: c };
           currentPage = 1;
           renderProducts();
+          window.scrollTo({ top: document.getElementById('tabs').offsetTop - 15, behavior: 'smooth' }); // 🚀 เลื่อนจออัตโนมัติ
         };
         t.appendChild(b);
       });
@@ -457,6 +459,7 @@
       document.getElementById('lists').innerHTML = '';
       document.getElementById('sec-others').classList.add('active');
       currentView = { type: 'other', value: '' };
+      window.scrollTo({ top: document.getElementById('tabs').offsetTop - 15, behavior: 'smooth' }); // 🚀 เลื่อนจออัตโนมัติ
     };
     t.appendChild(oB);
     addRow();
@@ -485,7 +488,7 @@
 
     if (currentView.type === 'search' && currentView.value) {
       const searchTerm = currentView.value.toLowerCase();
-      productsToRender = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
+      productsToRender = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm) && p.status !== 'Inactive'); // 🚀 กันผี: ซ่อน Inactive จากการค้นหา
       
       // กรองหมวดหมู่อีกชั้นตอนค้นหาด้วย
       productsToRender = productsToRender.filter(p => {
@@ -537,24 +540,30 @@
       const inputAttr = isSoldOut ? 'disabled readonly' : '';
       const badge = isSoldOut ? '<span class="badge-soldout">หมด</span>' : '';
       const categoryCol = isSearchView ? `<td style="font-size:11px; color:#888;">${p.category}</td>` : '';
+      
+      // ดึงค่าจากความจำ (ถ้ามีกรอกไว้)
+      const stockVal = cartState[p.name]?.stock || '';
+      const qtyVal = cartState[p.name]?.qty || '';
+      const safeName = p.name.replace(/'/g, "\\'"); // กันบั๊กชื่อสินค้ามี Single Quote
 
       h += `<tr class="${rowClass}">
               <td style="padding-right:10px;">${p.name} ${badge}</td>
               ${categoryCol}
-              <td><input type="text" class="qty-in si" placeholder="..." ${inputAttr}></td>
-              <td><input type="number" class="qty-in qi" data-n="${p.name}" placeholder="0" ${inputAttr}></td>
+              <td><input type="text" class="qty-in si" placeholder="..." value="${stockVal}" oninput="saveCartState('${safeName}', 'stock', this.value)" ${inputAttr}></td>
+              <td><input type="number" class="qty-in qi" data-n="${p.name}" placeholder="0" value="${qtyVal}" oninput="saveCartState('${safeName}', 'qty', this.value)" ${inputAttr}></td>
             </tr>`;
     });
     listsContainer.innerHTML = h + `</tbody></table>`;
   }
 
   function setPageSize(btn, size) { itemsPerPage = size; currentPage = 1; document.querySelectorAll('.page-size-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderProducts(); }
-  function changePage(direction) { const newPage = currentPage + direction; const products = (currentView.type === 'search') ? allProducts.filter(p => p.name.toLowerCase().includes(currentView.value.toLowerCase())) : appData.products[currentView.value]; const totalPages = Math.ceil(products.length / itemsPerPage); if (newPage >= 1 && newPage <= totalPages) { currentPage = newPage; renderProducts(); } }
+  function changePage(direction) { const newPage = currentPage + direction; const products = (currentView.type === 'search') ? allProducts.filter(p => p.name.toLowerCase().includes(currentView.value.toLowerCase()) && p.status !== 'Inactive') : appData.products[currentView.value]; const totalPages = Math.ceil(products.length / itemsPerPage); if (newPage >= 1 && newPage <= totalPages) { currentPage = newPage; renderProducts(); window.scrollTo({ top: document.getElementById('tabs').offsetTop - 15, behavior: 'smooth' }); } }
   function addRow() { const d = document.createElement('div'); d.className = 'other-row'; d.innerHTML = `<div class="col-name"><input type="text" class="main-in cn" style="margin:0;" placeholder="ชื่อสินค้า" maxlength="100"></div><div class="col-stock"><input type="text" class="qty-in cs" placeholder="..." maxlength="10"></div><div class="col-qty"><input type="number" class="qty-in cq" placeholder="0" max="999"></div><i class="fas fa-trash-alt btn-del" onclick="this.parentElement.remove()"></i>`; document.getElementById('custom-tbody').appendChild(d); }
   function toggleSearchBar() { const searchContainer = document.getElementById('search-container'), searchIcon = document.getElementById('searchIcon'), isHidden = searchContainer.style.display === 'none' || searchContainer.style.display === ''; document.getElementById('helpMenu').style.display = 'none'; document.getElementById('helpIcon').className = 'fas fa-question-circle'; searchContainer.style.display = isHidden ? 'block' : 'none'; searchIcon.className = isHidden ? 'fas fa-times' : 'fas fa-search'; if (isHidden) { searchContainer.querySelector('input').focus(); } else { document.getElementById('productSearchInput').value = ''; currentView = { type: 'category', value: document.querySelector('.tab-btn.active')?.dataset.categoryName || (appData.categories ? appData.categories[0] : '') }; renderProducts(); } }
   function toggleHelp() { const menu = document.getElementById('helpMenu'), icon = document.getElementById('helpIcon'), isHidden = menu.style.display === 'none' || menu.style.display === ''; menu.style.display = isHidden ? 'block' : 'none'; icon.className = isHidden ? 'fas fa-times' : 'fas fa-question-circle'; }
   function copyPhone(num) { navigator.clipboard.writeText(num); showError("คัดลอกเบอร์โทรศัพท์แล้ว"); }
-  function resetOrderUI() { document.querySelectorAll('input').forEach(i => i.value = ''); document.getElementById('successModal').style.display = 'none'; if(document.querySelector('.tbtn')) document.querySelector('.tbtn').click(); window.scrollTo(0,0); }
+  window.saveCartState = function(name, field, val) { if (!cartState[name]) cartState[name] = { stock: '', qty: '' }; cartState[name][field] = val; }; // 🚀 ฟังก์ชันเซฟความจำ
+  function resetOrderUI() { document.querySelectorAll('input').forEach(i => i.value = ''); cartState = {}; document.getElementById('successModal').style.display = 'none'; if(document.querySelector('.tbtn')) document.querySelector('.tbtn').click(); window.scrollTo(0,0); }
   function showError(m) { const t = document.getElementById('errT'); document.getElementById('errM').innerText = m; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); }, 4000); }
 
   // 🛡️ ระบบตรวจสอบออเดอร์ (รวมร่าง: ตรวจเช็คตามพารามิเตอร์ branch)
@@ -573,21 +582,27 @@
     const cleanTxt = (txt) => txt.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c] || c));
     const name = cleanTxt(elN.value.trim()), phone = cleanTxt(elP.value.trim()), branch = cleanTxt(elB.value.trim()), email = cleanTxt(elE.value.trim());
 
-    const qis = document.querySelectorAll('.qi'), sis = document.querySelectorAll('.si');
-    for (let i = 0; i < qis.length; i++) {
-      let qVal = parseFloat(qis[i].value) || 0;
+    // 🚀 ระบบ Review ใหม่: ดึงข้อมูลจากสมองความจำ (cartState) ล้วนๆ ไม่ต้องสนหน้าจอ
+    let hasError = false;
+    for (let pName in cartState) {
+      let qVal = parseFloat(cartState[pName].qty) || 0;
       if (qVal > 0) {
           // 🛡️ หน้าล็อค (sc): บังคับกรอกช่องสต็อกคงเหลือ
-          if (isStaffMode && !sis[i].value.trim()) {
-          sis[i].focus(); sis[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return showError(`กรุณาใส่สต็อกของ: ${qis[i].dataset.n}`);
+        if (isStaffMode && (!cartState[pName].stock || !cartState[pName].stock.trim())) {
+          // ค้นหาช่องกรอกในหน้าจอปัจจุบัน (ถ้ามี) แล้วกระโดดไปหา
+          const domInput = document.querySelector(`.si[data-n="${pName}"]`);
+          if(domInput){ domInput.focus(); domInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+          showError(`กรุณาใส่สต็อกของ: ${pName}`);
+          hasError = true;
+          break;
         }
         hasItem = true; 
-        let rawStock = sis[i].value.trim() || "-";
+        let rawStock = cartState[pName].stock || "-";
         const stockVal = rawStock.replace(/[,()]/g, '').replace(/สั่ง:/g, '');
-        d += `${qis[i].dataset.n} (เหลือ:${stockVal}, สั่ง:${qVal})\n`; 
+        d += `${pName} (เหลือ:${stockVal}, สั่ง:${qVal})\n`; 
       }
     }
+    if (hasError) return;
 
     const cns = document.querySelectorAll('.cn'), css = document.querySelectorAll('.cs'), cqs = document.querySelectorAll('.cq');
     for (let i = 0; i < cqs.length; i++) {

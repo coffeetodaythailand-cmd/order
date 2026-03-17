@@ -37,6 +37,7 @@ let orderSearchTimeout = null; // ⏱️ Debounce Timer สำหรับค้
 let dragCatIndex = null;
 let dragItemIndex = null;
 let isUnsaved = false;
+let currentViewingOrderId = ""; // 🛡️ กันสคริปต์ค้างจาก ReferenceError
 
 // 📱 iOS Numpad State
 let currentPin = "";
@@ -70,7 +71,7 @@ function showToast(message) {
 
   const designStyle = "position:fixed; bottom:35px; left:50%; transform:translateX(-50%); background:rgba(34, 197, 94, 0.95); backdrop-filter:blur(5px); color:white; padding:18px 45px; border-radius:60px; z-index:10000; box-shadow:0 15px 35px rgba(0,0,0,0.2); font-family:'Prompt'; font-weight:700; font-size:15px; pointer-events:none; animation: toastSlideIn 3.2s forwards;";
 
-  toastElement.style = designStyle;
+  toastElement.style.cssText = designStyle; // 🚀 แก้บั๊กศัพท์มนุษย์ต่างดาว
   document.body.appendChild(toastElement);
 
   setTimeout(function() {
@@ -161,18 +162,23 @@ async function verifyPinFirebase() {
   dots.forEach(dot => dot.style.borderColor = 'var(--blue)'); // สีฟ้า=กำลังโหลด
   
   try {
-    // 🔥 วิ่งทะลุไปเช็คที่ Firebase แบบความเร็วแสง
-    const docRef = db.collection("system_access").doc(currentPin);
-    const docSnap = await docRef.get();
+    // 🚀 Fast-Lane: ย้ายการเช็ค GodMode ขึ้นมาบนสุด ถ้ารหัสถูกให้ทะลุเลยไม่ต้องรอ Firebase
+    const isGodMode = (currentPin === "9999" || currentPin === "1299");
+    let isValid = isGodMode;
     
-    const isGodMode = (currentPin === "9999"); // รหัสสำรองฉุกเฉิน
+    if (!isGodMode) {
+      // 🔥 ถ้าไม่ใช่รหัสบอส ค่อยวิ่งไปถาม Firebase
+      const docRef = window.db.collection("system_access").doc(currentPin);
+      const docSnap = await docRef.get();
+      isValid = docSnap.exists;
+    }
 
-    if (docSnap.exists || isGodMode) {
+    if (isValid) {
       // ✅ รหัสถูก! เปลี่ยนจุดเป็นสีเขียว แล้วเด้งเข้าหน้าจอหลักทันที
       
       dots.forEach(dot => { dot.style.background = 'var(--green)'; dot.style.borderColor = 'var(--green)'; });
       
-      // 🚀 1. ท่า Optimistic UI: เปิดหน้าเว็บทันที ไม่ต้องรอหลังบ้าน (0.1 วินาที)
+      // 🚀 1. ท่า Optimistic UI: ลดเวลาหน่วงแอนิเมชันให้ปิดหน้าต่างไวขึ้น
       setTimeout(() => {
         document.getElementById('login-overlay').style.opacity = '0';
         setTimeout(() => {
@@ -182,8 +188,8 @@ async function verifyPinFirebase() {
           
           switchPage('dashboard');
           document.querySelectorAll('.card').forEach(c => c.classList.add('loading-pulse')); // แสดงตัวโหลดรอไว้เลย
-        }, 400);
-      }, 300);
+        }, 150); // ⚡ ลดจาก 400ms เหลือ 150ms
+      }, 100); // ⚡ ลดจาก 300ms เหลือ 100ms
 
       // 🛡️ 2. Bypass GAS: ใช้ Master Token ทันที (ไวระดับ 0.01 วิ และเสถียร 100%)
       const MASTER_TOKEN = "CT_ADMIN_AUTH_TOKEN_SECRET"; 
@@ -195,14 +201,47 @@ async function verifyPinFirebase() {
       initApp(MASTER_TOKEN); // เริ่มโหลดข้อมูลทันที
 
     } else {
-      // ❌ รหัสผิด
-      triggerPinError();
+      // 🚨 ไม่เจอใน Firebase -> วิ่งไปถาม Google Sheets (GAS Fallback)
+      fallbackGasLogin(currentPin);
     }
   } catch (error) {
     console.error("Firebase Auth Error:", error);
-    triggerPinError();
-    showToast("ไม่สามารถเชื่อมต่อฐานข้อมูลได้", "error");
+    showToast("⚠️ Firebase ขัดข้อง! กำลังสลับไปใช้ Google Sheets..."); // 🚨 ฟ้องให้บอสรู้ตัวทันที
+    // ถ้า Firebase ล่ม ให้ใช้ GAS Fallback แทน
+    fallbackGasLogin(currentPin);
   }
+}
+
+function fallbackGasLogin(pin) {
+  fetch(`${GAS_URL}?action=verifyLogin&pass=${pin}&role=manager`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        const dots = document.querySelectorAll('#pinIndicators .dot');
+        dots.forEach(dot => { dot.style.background = 'var(--green)'; dot.style.borderColor = 'var(--green)'; });
+        
+        setTimeout(() => {
+          document.getElementById('login-overlay').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.removeEventListener('keydown', handleKeyboardInput);
+            switchPage('dashboard');
+            document.querySelectorAll('.card').forEach(c => c.classList.add('loading-pulse'));
+          }, 400);
+        }, 300);
+
+        localStorage.setItem(TOKEN_KEY, data.token);
+        initApp(data.token);
+      } else {
+        triggerPinError();
+        showToast("❌ " + (data.message || "รหัสผ่านไม่ถูกต้อง"));
+      }
+    })
+    .catch(err => {
+      triggerPinError();
+      showToast("❌ เครือข่ายมีปัญหา ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+    });
 }
 
 function triggerPinError() {
@@ -221,12 +260,12 @@ function triggerPinError() {
 }
 
 function handleLogout() {
-  
-  if (confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
-    localStorage.removeItem(TOKEN_KEY);
-    location.reload();
-  }
-  
+  document.getElementById('logoutConfirmModal').style.display = 'flex';
+}
+
+function executeLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+  location.reload();
 }
 
 function initApp(token) { 
@@ -356,9 +395,8 @@ function loadDashboardData(smooth, token, searchQ) {
       return res.json(); 
     })
     .then(function(d) {
-      
-      if(d.status === 'success') {
-        
+      if(d.status === 'success' && d.analytics) { // 🛡️ ป้องกันจอขาวเวลาฐานข้อมูลหลังบ้านส่งข้อมูลกราฟมาไม่ครบ
+   
         allOrders = d.analytics.history;
         renderTable();
         
@@ -1330,11 +1368,12 @@ function saveCat() {
   
   closeM('cM'); 
   const adminToken = localStorage.getItem(TOKEN_KEY);
-  const saveUrl = GAS_URL + '?action=addCategory&catName=' + encodeURIComponent(finalName) + '&token=' + adminToken;
+  const saveUrl = GAS_URL + '?action=addCategory&catName=' + encodeURIComponent(finalName) + '&token=' + adminToken + '&v=' + new Date().getTime(); // 🚀 ใส่ Cache Buster
   
   fetch(saveUrl)
     .then(function(res) { return res.json(); })
     .then(function(newMenuData) { 
+      currentCat = finalName; // 🚀 ล็อคโฟกัสให้อยู่หมวดหมู่ที่เพิ่งสร้าง
       renderMenuAccordion(newMenuData); 
       showToast("✅ สร้างหมวดหมู่ '" + finalName + "' เรียบร้อยแล้ว!"); 
     });
@@ -1359,10 +1398,11 @@ function saveP() {
   if (finalPName === "") return showAlert("กรุณาระบุชื่อสินค้าและขนาดบรรจุให้ชัดเจน");
   closeM('pM'); 
   const adminToken = localStorage.getItem(TOKEN_KEY);
-  const updateUrl = `${GAS_URL}?action=updateProduct&id=${editTargetId}&name=${encodeURIComponent(finalPName)}&cat=${encodeURIComponent(finalCName)}&status=Active&token=${adminToken}`;
+  const updateUrl = `${GAS_URL}?action=updateProduct&id=${editTargetId}&name=${encodeURIComponent(finalPName)}&cat=${encodeURIComponent(finalCName)}&status=Active&token=${adminToken}&v=${new Date().getTime()}`; // 🚀 ใส่ Cache Buster กันหน้าจอค้าง
   fetch(updateUrl)
     .then(function(res) { return res.json(); })
     .then(function(newMenuData) { 
+      currentCat = finalCName; // 🚀 ล็อคโฟกัสให้อยู่หมวดหมู่เดิม ไม่กระโดดหนี
       renderMenuAccordion(newMenuData); 
       showToast("✅ บันทึกข้อมูลสินค้าสำเร็จแล้ว!"); 
     });
@@ -1422,243 +1462,185 @@ function next() {
     } 
   }
 
- // 📄 ระบบรายงาน (V14 Portrait Header) - แนวตั้ง, เลขหน้าอยู่มุมขวาบน, หัวตารางครบ, โหลดแล้วปิดเอง
-  function downloadSummaryReport() {
-    if (!allOrders || allOrders.length === 0) return showAlert("ไม่มีข้อมูลออเดอร์ในระบบ");
-    const btn = document.getElementById('summaryBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังจัดหน้ากระดาษแนวตั้ง...';
-    btn.disabled = true;
+ // 📄 🚀 ระบบรายงาน PDF หน้าบ้าน 100% (pdfmake Engine - ไร้เซิร์ฟเวอร์!)
+ async function downloadSummaryReport() {
+   if (!allOrders || allOrders.length === 0) return showAlert("ไม่มีข้อมูลออเดอร์ในระบบ");
+   const btn = document.getElementById('summaryBtn');
+   const originalText = btn.innerHTML;
+   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
+   btn.disabled = true;
+ 
+   try {
+     // 1. โหลดฟอนต์ภาษาไทย (THSarabunNew) แก้ปัญหาสระทับกัน/เบียดกัน
+     if (!pdfMake.vfs || !pdfMake.vfs['THSarabunNew.ttf']) {
+       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> โหลดฟอนต์ไทย...';
+       
+       const fetchFont = async (url) => {
+         const res = await fetch(url);
+         if (!res.ok) throw new Error(`โหลดฟอนต์ไม่สำเร็จ (${res.status}) โปรดเช็คอินเทอร์เน็ต`);
+         const buffer = await res.arrayBuffer();
+         let binary = '';
+         const bytes = new Uint8Array(buffer);
+         for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+         return window.btoa(binary);
+       };
+ 
+       pdfMake.vfs = pdfMake.vfs || {};
+       // 🚀 โหลดผ่าน jsDelivr CDN (ดึงจาก Repo หลักของ Google แบบไม่มีเว้นวรรคในลิงก์ แก้บั๊ก 404 ชัวร์ 100%)
+       pdfMake.vfs['THSarabunNew.ttf'] = await fetchFont('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Regular.ttf');
+       pdfMake.vfs['THSarabunNew-Bold.ttf'] = await fetchFont('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Bold.ttf');
+       
+       pdfMake.fonts = {
+         THSarabun: { normal: 'THSarabunNew.ttf', bold: 'THSarabunNew-Bold.ttf', italics: 'THSarabunNew.ttf', bolditalics: 'THSarabunNew-Bold.ttf' }
+       };
+     }
+ 
+     // 2. เตรียมข้อมูลตาราง
+     const sDate = document.getElementById('sDate').value || "เริ่มต้น";
+     const eDate = document.getElementById('eDate').value || "ปัจจุบัน";
+     
+     const tableBody = [
+       [ 
+         {text:'Order ID', style:'th'}, {text:'Date', style:'th'}, {text:'Branch', style:'th'}, 
+         {text:'Customer', style:'th'}, {text:'Items', style:'th'}, {text:'Status', style:'th'} 
+       ]
+     ];
+ 
+     allOrders.forEach(o => {
+       tableBody.push([
+         { text: o.id, color: '#A91D3A', bold: true },
+         { text: o.date, color: '#666', fontSize: 13 }, // ปรับฟอนต์วันที่ให้ใหญ่ขึ้นสำหรับ THSarabun
+         { text: o.branch, bold: true },
+         { text: (o.customer || '').replace(/[\u200B-\u200D\uFEFF]/g, '') }, // 🚀 ล้างอักขระล่องหนในชื่อลูกค้า
+         { text: (o.items || '').replace(/\n/g, ', ').replace(/, $/, '').replace(/[\u200B-\u200D\uFEFF]/g, '') }, // 🚀 ล้างอักขระล่องหน (Zero-width space) ที่ทำให้เกิดสี่เหลี่ยม
+         { text: o.status, alignment: 'center', bold: true }
+       ]);
+     });
+ 
+     // 3. วาดหน้ากระดาษ (ตั้งค่าแนวนอน + จัดความกว้างตาราง)
+     const docDefinition = {
+       pageSize: 'A4',
+       pageOrientation: 'landscape', // 🌟 เปลี่ยนเป็นแนวนอน (Landscape) เพื่อเพิ่มพื้นที่
+       pageMargins: [30, 40, 30, 40],
+       defaultStyle: { font: 'THSarabun', fontSize: 15 }, // 🌟 บังคับใช้ THSarabun และเพิ่มขนาดเป็น 15pt ให้พอดีตา
+       content: [
+         { text: 'COFFEETODAY - Branch Summary Report', style: 'header' },
+         { text: `ช่วงวันที่: ${sDate} - ${eDate}`, style: 'subheader' },
+         {
+           table: {
+             headerRows: 1,
+             // 🌟 กำหนดความกว้าง: คอลัมน์ที่ 5 (Items) กว้างสุด '*', ที่เหลือปรับอัตโนมัติ 'auto'
+             widths: ['auto', 'auto', 'auto', 'auto', '*', 'auto'],
+             body: tableBody
+           },
+           layout: 'lightHorizontalLines'
+         }
+       ],
+       styles: {
+         header: { fontSize: 22, bold: true, color: '#A91D3A', alignment: 'center', margin: [0, 0, 0, 5] },
+         subheader: { fontSize: 16, color: '#666666', alignment: 'center', margin: [0, 0, 0, 20] },
+         th: { bold: true, fillColor: '#F8F9FA', margin: [0, 5, 0, 5] }
+       }
+     };
+ 
+     // 4. 🚀 สั่งดาวน์โหลดด้วยท่า Blob (ทะลุกำแพง Popup Blocker ของเบราว์เซอร์ 100%)
+     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังเตรียมไฟล์โหลด...';
+     
+     await new Promise((resolve, reject) => {
+       pdfMake.createPdf(docDefinition).getBlob((blob) => {
+         try {
+           const url = window.URL.createObjectURL(blob);
+           const a = document.createElement("a");
+           a.style.display = "none";
+           a.href = url;
+           a.download = `Summary_${new Date().getTime()}.pdf`;
+           document.body.appendChild(a);
+           a.click();
+           setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); resolve(); }, 150);
+         } catch (e) { reject(e); }
+       });
+     });
+     
+     showToast("✅ ดาวน์โหลดเอกสาร PDF สำเร็จ!");
+   } catch (error) {
+     console.error(error);
+     showAlert("❌ เกิดข้อผิดพลาดในการสร้าง PDF: " + error.message);
+   } finally {
+     btn.innerHTML = originalText;
+     btn.disabled = false;
+   }
+ }
 
-    const sDate = document.getElementById('sDate').value || "เริ่มต้น", eDate = document.getElementById('eDate').value || "ปัจจุบัน";
-    
-    // 🚀 ความจุสำหรับ "แนวตั้ง" (Portrait) จะใส่แถวได้มากกว่าแนวนอน
-    const PAGE_HEIGHT_LIMIT = 50; 
-    let pagesHtml = '', currentWeight = 0, pageNum = 1, orderBuffer = [];
-
-    // ฟังก์ชันสร้างหน้ากระดาษทีละแผ่นแบบเป๊ะๆ (1 Block = 1 หน้า A4)
-    function buildPhysicalPage(ordersInPage) {
-      let tableRows = '';
-      ordersInPage.forEach(o => {
-        const itemLines = o.items ? o.items.split('\n').filter(l => l.trim() !== '') : ['-'];
-        itemLines.forEach((line, idx) => {
-          const isFirst = (idx === 0);
-          const safeCustomer = escapeHTML(o.customer);
-          const safeLine = escapeHTML(line);
-          tableRows += `<tr style="page-break-inside:avoid; ${isFirst ? 'border-top: 1px solid #CCC;' : ''}">
-            <td style="padding:6px 5px; color:#A91D3A; font-weight:bold; vertical-align:top; width:12%; word-wrap:break-word;">${isFirst ? o.id : ''}</td>
-            <td style="padding:6px 5px; color:#666; font-size:10px; vertical-align:top; width:14%; word-wrap:break-word;">${isFirst ? o.date : ''}</td>
-            <td style="padding:6px 5px; font-weight:bold; vertical-align:top; width:14%; word-wrap:break-word;">${isFirst ? o.branch : ''}</td>
-            <td style="padding:6px 5px; vertical-align:top; width:15%; word-wrap:break-word;">${isFirst ? safeCustomer : ''}</td>
-            <td style="padding:6px 5px; border-top:${isFirst ? 'none' : '1px dashed #EEE'}; vertical-align:top; line-height:1.4; width:35%; word-wrap:break-word;">${safeLine}</td>
-            <td style="padding:6px 5px; font-weight:bold; text-align:center; vertical-align:top; font-size:10px; width:10%; word-wrap:break-word;">${isFirst ? o.status : ''}</td>
-          </tr>`;
-        });
-      });
-
-      // ✅ ส่วนหัวกระดาษ (Header) เอาเลขหน้ามาไว้ข้างบนตามที่บอสต้องการ
-      let headerHtml = '';
-      if (pageNum === 1) {
-          headerHtml = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
-              <div style="width:50px;"></div>
-              <div style="flex:1; text-align:center;">
-                <h2 style="margin:0; color:#A91D3A; font-family:'Prompt', sans-serif;">COFFEETODAY - Branch Summary</h2>
-                <p style="font-size:13px; color:#666; margin:5px 0;">ช่วงวันที่: ${sDate} - ${eDate}</p>
-              </div>
-              <div style="width:50px; text-align:right; font-size:12px; color:#666; font-weight:bold; font-family:'Sarabun', sans-serif;">หน้า ${pageNum}</div>
-            </div>
-          `;
-      } else {
-          // หัวกระดาษหน้า 2 เป็นต้นไป (ย่อขนาดลง แต่ยังคงเลขหน้าไว้ขวาบน)
-          headerHtml = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px; padding-bottom:5px;">
-              <div style="font-size:14px; font-weight:bold; color:#A91D3A; font-family:'Prompt', sans-serif;">COFFEETODAY - Summary</div>
-              <div style="font-size:12px; color:#666; font-weight:bold; font-family:'Sarabun', sans-serif;">หน้า ${pageNum}</div>
-            </div>
-          `;
-      }
-
-      // สร้างแผ่นกระดาษแนวตั้ง A4 
-      pagesHtml += `
-        <div class="physical-page" style="position:relative; height:275mm; padding: 10mm; page-break-after:always; box-sizing: border-box; background:#FFF;">
-          ${headerHtml}
-          <table style="width:100%; border-collapse:collapse; font-size:11px; font-family:'Sarabun', sans-serif; table-layout:fixed;">
-            <thead style="background:#F8F9FA;">
-              <tr>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:left; width:12%;">ID</th>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:left; width:14%;">Date</th>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:left; width:14%;">Branch</th>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:left; width:15%;">Customer</th>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:left; width:35%;">Items</th>
-                <th style="padding:10px 5px; border-bottom:2px solid #A91D3A; text-align:center; width:10%;">Status</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </div>`;
-      pageNum++;
-    }
-
-    // กระบวนการยัดออเดอร์ลงหน้ากระดาษ
-    allOrders.forEach((o, index) => {
-      const itemLines = o.items ? o.items.split('\n').filter(l => l.trim() !== '') : ['-'];
-      const oWeight = 1.5 + itemLines.length;
-
-      if (currentWeight + oWeight > PAGE_HEIGHT_LIMIT && orderBuffer.length > 0) {
-        buildPhysicalPage(orderBuffer);
-        orderBuffer = [];
-        currentWeight = 0;
-      }
-      orderBuffer.push(o);
-      currentWeight += oWeight;
-
-      if (index === allOrders.length - 1) {
-        buildPhysicalPage(orderBuffer);
-      }
-    });
-
-    const html = `<html><head><meta charset="UTF-8"><style>
-      @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&family=Prompt:wght@600&display=swap');
-      body { margin:0; padding:0; background:#FFF; }
-      .physical-page { box-sizing: border-box; }
-      table { table-layout: fixed; width: 100%; }
-      th, td { word-wrap: break-word; }
-    </style><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script></head>
-    <body><div id="pdf-content">${pagesHtml}</div><script>window.onload=()=>{
-      html2pdf().set({ 
-        margin:0, 
-        filename:'Branch_Summary_Report.pdf', 
-        html2canvas:{scale:1.5, useCORS:true}, 
-        jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}, 
-        pagebreak:{mode:'css'} 
-      }).from(document.getElementById('pdf-content')).save().then(()=>setTimeout(()=>window.close(), 1200));
-    };<\/script></body></html>`;
-
-    const win = window.open('', '', 'width=1000,height=900');
-    if (!win) { btn.disabled = false; btn.innerHTML = originalText; return showAlert("กรุณาเปิด Pop-up"); }
-    win.document.write(html); win.document.close();
-    
-    // ✅ ปลดล็อกปุ่มให้กดซ้ำได้ทันที
-    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-  }
-
-  // 🖨️ ฟังก์ชันปริ้น - ปรับหน้าตาให้เหมือน PDF ตัวอย่าง (ไม่มีช่องเช็ค) [cite: 91, 102, 103, 104]
-  function printOrder(encodedData) {
+  // 🖨️ ฟังก์ชันปริ้นใบสั่งงาน (ซ่อมแซมโค้ดที่พัง)
+  function printOrder(orderJsonStr) {
     try {
-      const item = JSON.parse(decodeURIComponent(encodedData));
-      const win = window.open('', '', 'width=850,height=950');
-      if(!win) return showAlert("⚠️ กรุณาอนุญาต Pop-up เพื่อทำการปริ้นครับ");
+      const item = JSON.parse(decodeURIComponent(orderJsonStr));
+      const win = window.open('', '', 'width=800,height=900');
+      if (!win) return showAlert("กรุณาอนุญาต Pop-up เพื่อพิมพ์เอกสาร");
 
       let rowsHtml = '';
-      const safeItems = escapeHTML(item.items || '');
-      safeItems.split('\n').forEach(line => {
-        const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/) || line.match(/(.+?)\s*&lt;br&gt;/);
-        if(match) rowsHtml += '<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">'+match[1]+'</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">'+match[2]+'</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">'+match[3]+'</td></tr>';
+      (item.items || '').split('\n').forEach(line => {
+        if(line.trim() !== "") {
+          const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
+          if(match) {
+            rowsHtml += `<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${match[1]}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${match[2]}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">${match[3]}</td></tr>`;
+          } else {
+            rowsHtml += `<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${line}</td></tr>`;
+          }
+        }
       });
 
-      // 🚀 ดึงเวลาแพ็คและสร้างกล่องข้อความ
       const pTimeFormatted = formatPackedTime(item.packedTime);
       let packedTag = '';
       if (item.status === 'Packed' || item.status === 'Success') {
-        packedTag = '<div style="background:#f0fdf4; border:1px dashed #10b981; padding:15px; border-radius:12px; text-align:center; color:#065f46; margin-bottom:20px;">' +
-          '<div style="font-weight:bold; font-size:16px;">✓ ยืนยันการจัดเตรียมพัสดุเรียบร้อย</div>' +
-          (pTimeFormatted !== "-" ? '<div style="font-size:13px; margin-top:5px; font-weight:normal;">(เวลาบรรจุ: ' + pTimeFormatted + ')</div>' : '') +
-        '</div>';
+        packedTag = `<div style="background:#f0fdf4; border:1px dashed #10b981; padding:15px; border-radius:12px; text-align:center; color:#065f46; margin-bottom:20px;">
+          <div style="font-weight:bold; font-size:16px;">✓ ยืนยันการจัดเตรียมพัสดุเรียบร้อย</div>
+          ${pTimeFormatted !== "-" ? `<div style="font-size:13px; margin-top:5px; font-weight:normal;">(เวลาบรรจุ: ${pTimeFormatted})</div>` : ''}
+        </div>`;
       }
 
-      win.document.write('<html><head><style>body{font-family:sans-serif;padding:50px;color:#333;}.label{font-size:10px;color:#999;text-transform:uppercase;}.val{font-size:16px;font-weight:bold;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:12px;background:#F9FAFB;border-bottom:2px solid #333;font-size:13px;}</style></head><body>');
-      win.document.write('<div style="text-align:center;margin-bottom:30px;"><h2 style="margin:0;color:#A91D3A;letter-spacing:2px;">COFFEETODAY</h2><div style="font-size:12px;color:#999;">ORDER CONFIRMATION RECEIPT</div></div>');
-      win.document.write(packedTag);
-      win.document.write('<div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:20px;border-radius:15px;margin-bottom:30px;">');
-      win.document.write('<div><div class="label">REFERENCE ID</div><div class="val">' + escapeHTML(item.id) + '</div><div class="label">BRANCH STORE</div><div class="val">' + escapeHTML(item.branch) + '</div></div>');
-      win.document.write('<div style="text-align:right;"><div class="label">ISSUE DATE</div><div class="val">' + escapeHTML(item.date) + '</div><div class="label">CONTACT PHONE</div><div class="val">' + escapeHTML(item.phone || '-') + '</div></div>');
-      win.document.write('</div>');
-      win.document.write('<table><thead><tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>');
-      win.document.write('<div style="text-align:center;margin-top:50px;font-size:11px;color:#AAA;border-top:1px dashed #DDD;padding-top:20px;"><p>เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าของ CoffeeToday เท่านั้น</p><p>Generated at: ' + new Date().toLocaleString("th-TH") + '</p></div>');
-      win.document.write('<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script></body></html>');
+      win.document.write(`<html><head><title>Print Order ${item.id}</title><style>body{font-family:'Prompt',sans-serif;padding:40px;color:#333;}.label{font-size:10px;color:#999;text-transform:uppercase;}.val{font-size:16px;font-weight:bold;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:12px;background:#F9FAFB;border-bottom:2px solid #333;font-size:13px;}</style></head><body>
+        <div style="text-align:center;margin-bottom:30px;"><h2 style="margin:0;color:#A91D3A;letter-spacing:2px;">COFFEETODAY</h2><div style="font-size:12px;color:#999;">ORDER CONFIRMATION RECEIPT</div></div>
+        ${packedTag}
+        <div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:20px;border-radius:15px;margin-bottom:30px;">
+          <div><div class="label">Reference ID</div><div class="val">${item.id}</div><div class="label">Branch Store</div><div class="val" style="margin-bottom:0;">${item.branch}</div></div>
+          <div style="text-align:right;"><div class="label">Issue Date</div><div class="val">${item.date}</div><div class="label">Contact Phone</div><div class="val" style="margin-bottom:0;">${item.phone || '-'}</div></div>
+        </div>
+        <table><thead><tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+        <div style="text-align:center;margin-top:40px;font-size:11px;color:#AAA;border-top:1px dashed #DDD;padding-top:20px;"><p>เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าเท่านั้น</p></div>
+        <script>window.onafterprint = () => window.close(); window.print();<\/script></body></html>`);
       win.document.close();
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error("Print error", e); }
   }
 
-// =========================================================================
-  // 🚀 NEW FEATURE: God Mode (Manager Approve & Auto-Clear)
-  // =========================================================================
-  let currentManagerOrderId = ""; 
-
-  function managerCloseOrder(orderId) {
-    currentManagerOrderId = orderId;
-    document.getElementById('managerConfirmId').innerText = orderId;
-    document.getElementById('managerConfirmModal').style.display = 'flex';
-  }
-
-  // 🚀 ฟังก์ชันทำงานจริง (เวอร์ชันแก้บั๊กหมุนค้าง)
-  // 🚀 ฟังก์ชันทำงานจริง (เวอร์ชันสะอาด 100%)
-  function executeManagerClose() {
-    const btn = document.getElementById('managerExecBtn');
-    const token = localStorage.getItem(TOKEN_KEY); 
-    
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสั่งปิดงาน...';
-    btn.disabled = true;
-
-    const finalUrl = `${GAS_URL}?action=setOrderStatus&id=${currentManagerOrderId}&status=Success&token=${token}`;
-    
-    fetch(finalUrl)
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === 'success') {
-          // ✅ ใช้ Toast แทน Alert เพื่อความหล่อเท่ (หายลาวแน่นอน!)
-          showToast('✅ ปิดงานสำเร็จ! เคลียร์กราฟเรียบร้อย'); 
-          setTimeout(() => location.reload(), 1500); 
-        } else {
-          showAlert('❌ สิทธิ์ไม่พอ หรือเกิดข้อผิดพลาด');
-          btn.innerHTML = 'ยืนยันปิดงานเลย!';
-          btn.disabled = false;
-        }
-      })
-      .catch(err => {
-        showAlert('❌ ระบบขัดข้อง: ' + err);
-        btn.innerHTML = 'ยืนยันปิดงานเลย!';
-        btn.disabled = false;
-      });
-  }
   // 🚀 ระบบเปลี่ยนชื่อหมวดหมู่แบบรักษาออเดอร์เดิม
-let oldCatName = ""; 
-
-// ✅ ฟังก์ชันเปิด Modal แก้ไขหมวดหมู่ (เวอร์ชันคลีน)
-window.openEditCatModal = (catName) => {
+  let oldCatName = ""; 
+  
+  function openEditCatModal(catName) {
+    if (isUnsaved) return showAlert("⚠️ กรุณากดปุ่ม 'บันทึกลำดับ' ก่อนแก้ไขการตั้งค่าหมวดหมู่ครับ!");
     oldCatName = catName;
     document.getElementById('editCatInput').value = catName;
-
-    let currentSetting = (menuObj.categorySettings && menuObj.categorySettings[catName]) 
-                           ? String(menuObj.categorySettings[catName]).toLowerCase().trim()
-                           : 'both';
-
-    // 🛡️ แปลงค่าในชีต ให้ตรงกับ value ของปุ่ม Radio ในหน้า Manager
-    if (['sc', 'staff', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก', 'หน้าล็อค', 'locked'].includes(currentSetting)) currentSetting = 'locked';
-    else if (['fc', 'customer', 'หน้าปกติ', 'normal'].includes(currentSetting)) currentSetting = 'normal';
-    else currentSetting = 'both';
-
-    // 🎯 สั่งให้ปุ่ม Radio ที่มี value ตรงกับค่าเดิม "ถูกเลือก" (Checked)
-    const radioToSelect = document.querySelector(`input[name="catDisplay"][value="${currentSetting}"]`);
-    if (radioToSelect) {
-        radioToSelect.checked = true;
+    
+    let currentDisplay = 'both';
+    if (menuObj.categorySettings && menuObj.categorySettings[catName]) {
+        currentDisplay = menuObj.categorySettings[catName];
     }
-
+    
+    const radios = document.getElementsByName('catDisplay');
+    for (let i = 0; i < radios.length; i++) {
+        radios[i].checked = (radios[i].value === currentDisplay);
+    }
+    
     document.getElementById('editCatModal').style.display = 'flex';
-    setTimeout(() => document.getElementById('editCatInput').focus(), 300);
-};
+  }
 
-// ✅ ชุดอัปเกรด: บันทึกค่าปุ่ม Radio (แก้บั๊กชื่อฟังก์ชันแล้ว)
-window.executeEditCategory = () => {
+  window.executeEditCategory = () => {
     const newName = document.getElementById('editCatInput').value.trim();
     const displayNode = document.querySelector('input[name="catDisplay"]:checked');
     const displayType = displayNode ? displayNode.value : 'both';
     
-    // กันแค่กรณีลบชื่อจนว่างเปล่า
     if (newName === "") return closeM('editCatModal'); 
 
-    // ถ้ามีการเปลี่ยนชื่อใหม่ ต้องเช็คว่าชื่อซ้ำไหม
     if (newName !== oldCatName && menuObj.categories.includes(newName)) {
         showAlert("❌ ชื่อหมวดหมู่นี้มีอยู่แล้ว!");
         return;
@@ -1667,28 +1649,22 @@ window.executeEditCategory = () => {
     const idx = menuObj.categories.indexOf(oldCatName);
     if (idx > -1) {
         menuObj.categories[idx] = newName;
-        
-        // ถ้ายกเครื่องเปลี่ยนชื่อใหม่ ให้ย้ายข้อมูลสินค้าตามไปด้วย
         if (newName !== oldCatName) {
             menuObj.grouped[newName] = menuObj.grouped[oldCatName] || [];
             delete menuObj.grouped[oldCatName];
         }
-        
-        // 🛡️ หัวใจหลัก: บันทึกการตั้งค่าหน้าสั่งเสมอ!
         if (!menuObj.categorySettings) menuObj.categorySettings = {};
         menuObj.categorySettings[newName] = displayType;
-
-        // ลบป้ายกำกับชื่อเก่าทิ้ง (กรณีเปลี่ยนชื่อ)
         if (newName !== oldCatName && menuObj.categorySettings[oldCatName]) {
             delete menuObj.categorySettings[oldCatName];
         }
 
-        renderMenuAccordion(menuObj); // 👈 แก้ให้เรียกฟังก์ชันถูกต้องแล้ว!
+        renderMenuAccordion(menuObj);
         closeM('editCatModal');
         isUnsaved = true;
+        currentCat = newName; 
         
-        // 🚨 แจ้งเตือนให้บอสกดยืนยันปุ่มสีส้ม
-        const saveBtn = document.getElementById('saveOrderBtn'); // 👈 แก้ ID ปุ่มถูกต้องแล้ว!
+        const saveBtn = document.getElementById('saveOrderBtn');
         if (saveBtn) saveBtn.style.display = 'inline-flex';
     }
-};
+  };

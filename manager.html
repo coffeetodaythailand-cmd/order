@@ -9,11 +9,12 @@
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
+  <!-- 🔥 เพิ่มไลบรารี pdfmake สำหรับวาด PDF ระดับเทพ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
-  <link rel="stylesheet" href="style.css?v=nitro5">
+  <link rel="stylesheet" href="style.css?v=nitro7">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -120,7 +121,7 @@
       appId: "1:949270145151:web:ae6cbc6c5c5d54a502b74a"
     };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-    const db = firebase.firestore();
+    window.db = firebase.firestore(); // 🚀 บังคับให้เป็นตัวแปร Global ทะลุไปหา script.js ชัวร์ๆ
   </script>
 </head>
 <body>
@@ -567,6 +568,22 @@
     </div>
   </div>
 </div>
-<script src="script.js?v=nitro5"></script>
+
+<!-- 🚀 คืนชีพ Modal Logout สไตล์ Premium -->
+<div id="logoutConfirmModal" class="overlay">
+  <div class="modal-card" style="text-align: center; max-width: 400px; border-top: 15px solid var(--red);">
+    <div style="margin-bottom: 20px;">
+      <i class="fas fa-sign-out-alt" style="font-size: 70px; color: var(--red); filter: drop-shadow(0 5px 15px rgba(169,29,58,0.3));"></i>
+    </div>
+    <h2 style="margin:0; font-family:'Prompt'; color:var(--dark); font-size: 24px;">ออกจากระบบ</h2>
+    <p style="color: #666; margin: 15px 0 30px; font-size: 14px; line-height: 1.6;">คุณต้องการออกจากระบบผู้จัดการใช่หรือไม่?</p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button class="btn" style="flex: 1; background-color: #f3f4f6; color: #444; border-radius: 15px;" onclick="closeM('logoutConfirmModal')">ยกเลิก</button>
+      <button class="btn btn-red" style="flex: 1.5; border-radius: 15px; box-shadow: 0 8px 20px rgba(169,29,58,0.3);" onclick="executeLogout()">ยืนยันออกจากระบบ</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js?v=nitro7"></script>
 </body>
 </html>
