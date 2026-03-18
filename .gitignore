@@ -1,23 +1,12 @@
-# 🔒 LOCK: ห้ามเอาสมอง AI ขึ้นเด็ดขาด
-Ai-BuH/
-brain_data/
+# 🚫 1. ปิดประตูตาย: บล็อคทุกไฟล์และโฟลเดอร์ทั้งหมดไม่ให้ขึ้น Git
+/*
 
-# 🗑️ ไฟล์แฝดที่ไม่ได้ใช้แล้ว (ยุบรวมเป็น order.html แล้ว)
-odfc.html
-odsc.html
-
-# 📄 ลบไฟล์ขยะและไฟล์ที่ไม่ใช้ใน Git
-Code.gs
-Code_Review.gs
-Code_External.gs
-git_guide.md
-tasks.json
-SESSION_LOGS.md
-MIGRATION_GUIDE.md
-auto-sync.ps1
-changelog.md
-project_status.md
-.vscode/
-
-# 🔐 ป้องกันการอัปโหลดไฟล์รหัสผ่านและวิธีเข้าสู่ระบบ
-SYSTEM_ACCESS.md
+# ✅ 2. เปิดช่องพิเศษ: อนุญาตเฉพาะไฟล์ที่ใช้จริงของโปรเจค (Whitelist)
+!.gitignore
+!README.md
+!index.html
+!manager.html
+!order.html
+!stock.html
+!script.js
+!style.css
