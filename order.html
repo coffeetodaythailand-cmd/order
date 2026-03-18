@@ -567,12 +567,13 @@
       const stockVal = cartState[p.name]?.stock || '';
       const qtyVal = cartState[p.name]?.qty || '';
       const safeName = p.name.replace(/'/g, "\\'"); // กันบั๊กชื่อสินค้ามี Single Quote
+      const safeHtmlName = p.name.replace(/"/g, '&quot;'); // กันบั๊ก DOM พัง
 
       h += `<tr class="${rowClass}">
               <td style="padding-right:10px;">${p.name} ${badge}</td>
               ${categoryCol}
-              <td><input type="text" class="qty-in si" placeholder="..." value="${stockVal}" oninput="saveCartState('${safeName}', 'stock', this.value)" ${inputAttr}></td>
-              <td><input type="number" class="qty-in qi" data-n="${p.name}" placeholder="0" value="${qtyVal}" oninput="saveCartState('${safeName}', 'qty', this.value)" ${inputAttr}></td>
+              <td><input type="text" class="qty-in si" data-n="${safeHtmlName}" placeholder="..." value="${stockVal}" oninput="saveCartState('${safeName}', 'stock', this.value)" ${inputAttr}></td>
+              <td><input type="number" class="qty-in qi" data-n="${safeHtmlName}" placeholder="0" value="${qtyVal}" oninput="saveCartState('${safeName}', 'qty', this.value)" ${inputAttr}></td>
             </tr>`;
     });
     listsContainer.innerHTML = h + `</tbody></table>`;
@@ -611,9 +612,30 @@
       if (qVal > 0) {
           // 🛡️ หน้าล็อค (sc): บังคับกรอกช่องสต็อกคงเหลือ
         if (isStaffMode && (!cartState[pName].stock || !cartState[pName].stock.trim())) {
-          // ค้นหาช่องกรอกในหน้าจอปัจจุบัน (ถ้ามี) แล้วกระโดดไปหา
-          const domInput = document.querySelector(`.si[data-n="${pName}"]`);
-          if(domInput){ domInput.focus(); domInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+          // 🚀 Smart Auto-Navigate: ค้นหาหมวดหมู่และหน้าของสินค้าที่ลืมกรอก
+          const prodInfo = allProducts.find(p => p.name === pName);
+          if (prodInfo) {
+            const targetTab = document.querySelector(`.tbtn[data-category-name="${prodInfo.category}"]`);
+            if (targetTab && !targetTab.classList.contains('active')) targetTab.click();
+            
+            const catProducts = appData.products[prodInfo.category].filter(p => p.status !== 'Inactive');
+            const prodIndex = catProducts.findIndex(p => p.name === pName);
+            if (prodIndex >= 0) {
+              const targetPage = Math.floor(prodIndex / itemsPerPage) + 1;
+              if (currentPage !== targetPage) { currentPage = targetPage; renderProducts(); }
+            }
+          }
+          
+          setTimeout(() => {
+            const safeQueryName = pName.replace(/"/g, '\\"');
+            const domInput = document.querySelector(`.si[data-n="${safeQueryName}"]`);
+            if(domInput){ 
+              domInput.focus(); domInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+              domInput.style.boxShadow = '0 0 15px rgba(169,29,58,0.6)'; domInput.style.borderColor = '#A91D3A';
+              setTimeout(() => { domInput.style.boxShadow = ''; domInput.style.borderColor = '#EEE'; }, 2500);
+            }
+          }, 50);
+          
           showError(`กรุณาใส่สต็อกของ: ${pName}`);
           hasError = true;
           break;
@@ -632,8 +654,15 @@
       if (n && qVal > 0) {
           // 🛡️ หน้าล็อค (sc): บังคับกรอกช่องสต็อกคงเหลือในรายการพิเศษด้วย
           if (isStaffMode && !css[i].value.trim()) {
-          css[i].focus(); css[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return showError(`กรุณาใส่สต็อกของ: ${n}`);
+            const customTabBtn = Array.from(document.querySelectorAll('.tbtn')).find(b => b.innerText.includes('รายการอื่นๆ'));
+            if (customTabBtn && !customTabBtn.classList.contains('active')) customTabBtn.click();
+            
+            setTimeout(() => {
+              css[i].focus(); css[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+              css[i].style.boxShadow = '0 0 15px rgba(169,29,58,0.6)'; css[i].style.borderColor = '#A91D3A';
+              setTimeout(() => { css[i].style.boxShadow = ''; css[i].style.borderColor = '#EEE'; }, 2500);
+            }, 50);
+            return showError(`กรุณาใส่สต็อกของ: ${n}`);
         }
         hasItem = true; 
         let safeName = n.replace(/[,()]/g, '');
