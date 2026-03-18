@@ -676,7 +676,7 @@
       htmlBuilder += '</div>';
       htmlBuilder += statusBadge;
       htmlBuilder += '</div>';
-      htmlBuilder += '<div class="task-time">' + t.time + '</div>';
+      htmlBuilder += '<div class="task-time"><i class="far fa-clock" style="margin-right: 4px;"></i> ' + (t.date || t.time) + '</div>';
       htmlBuilder += '</div>';
       
       if (!isAlreadyDone) {

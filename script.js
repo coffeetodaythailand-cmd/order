@@ -719,7 +719,7 @@ function renderTable() {
   let filteredOrders = allOrders.filter(function(order) {
     
     if(queryLower === "") {
-      return true;
+      return order.status !== 'Success'; // 🚀 คลีนหน้าจอ: ซ่อนบิลที่สำเร็จแล้วถ้าไม่ได้พิมพ์ค้นหา
     }
     
     const fullId = order.id.toLowerCase();
@@ -1051,7 +1051,7 @@ function buildProductRow(p, idx, catName, isDraggable) {
           <option value="Active" ${s === 'Active' ? 'selected' : ''}>ปกติ</option><option value="SoldOut" ${s === 'SoldOut' ? 'selected' : ''}>ของหมด</option><option value="Inactive" ${s === 'Inactive' ? 'selected' : ''}>ซ่อนไว้</option>
         </select>
         <i class="fas fa-edit" style="color:#CCC; cursor:pointer; font-size:16px;" onclick="openProdModal('${p.rowId}', '${nameSafe}', '${catName}')"></i>
-        <i class="fas fa-trash-alt" style="color:#EEE; cursor:pointer; font-size:16px;" onclick="prepareDelete('prod', ${idx}, '${nameSafe}', '${catName}')"></i>
+        <i class="fas fa-trash-alt" style="color:#ffb3b3; cursor:pointer; font-size:16px;" onclick="prepareDelete('prod', ${idx}, '${nameSafe}', '${catName}')"></i>
       </div>
     </div>`;
 }
@@ -1093,6 +1093,11 @@ function renderMenuAccordion(menuData) {
   }
 
   // 📦 โหมดปกติ
+  if (currentCat && !menuData.categories.includes(currentCat)) {
+    // 🚀 GOD GUARD 1: คืนค่าหมวดหมู่กรณีมี Space เกิน หรือตัวเล็ก/ใหญ่ไม่ตรงกัน
+    const match = menuData.categories.find(c => c.trim().toLowerCase() === currentCat.trim().toLowerCase());
+    currentCat = match ? match : menuData.categories[0];
+  }
   if (!currentCat && menuData.categories.length > 0) currentCat = menuData.categories[0];
   
   menuData.categories.forEach((cat, idx) => {
@@ -1103,7 +1108,7 @@ function renderMenuAccordion(menuData) {
     const displayTag = (menuData.categorySettings && menuData.categorySettings[cat]) ? String(menuData.categorySettings[cat]).toLowerCase().trim() : 'both';
     let displayBadge = '';
     if (['locked', 'sc', 'staff', 'หน้าล็อคสต๊อค', 'หน้าล็อคสต็อก', 'หน้าล็อค'].includes(displayTag)) {
-        displayBadge = '<span style="font-size:10px; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #fca5a5; display:inline-block; margin-top:4px;">(แสดงเฉพาะหน้าพนักงาน ?branch=sc)</span>';
+        displayBadge = '<span style="font-size:10px; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #fca5a5; display:inline-block; margin-top:4px;">(แสดงเฉพาะสาขา)</span>';
     } else if (['normal', 'fc', 'customer', 'หน้าปกติ'].includes(displayTag)) {
         displayBadge = '<span style="font-size:10px; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:6px; margin-left:5px; border: 1px solid #bbf7d0; display:inline-block; margin-top:4px;">(แสดงเฉพาะหน้าลูกค้า order.html)</span>';
     } else {
@@ -1152,7 +1157,14 @@ function renderMenuAccordion(menuData) {
   document.getElementById('catChips').innerHTML = chipsHtml;
   // 🚀 อัปเดตเงื่อนไขการแสดงผลข้อความเริ่มต้น
   document.getElementById('menuItems').innerHTML = itemsHtml || (currentCat ? '<div style="text-align:center; padding:30px; font-size:14px; color:#CCC;">หมวดนี้ยังไม่มีสินค้า...</div>' : '<div style="text-align:center; padding:40px; color:#CCC;">กรุณาเลือกหมวดหมู่...</div>');
-  document.getElementById('pCatSelect').innerHTML = selectHtml;
+  
+  // 🚀 GOD GUARD 2: ล็อคค่าที่เลือกใน Modal ไม่ให้เด้งกลับไป Index 0 ตอน Auto-Sync ทำงานเบื้องหลัง
+  const pSelect = document.getElementById('pCatSelect');
+  const cachedSelectValue = pSelect ? pSelect.value : null;
+  if (pSelect) pSelect.innerHTML = selectHtml;
+  if (pSelect && cachedSelectValue && Array.from(pSelect.options).some(opt => opt.value === cachedSelectValue)) {
+      pSelect.value = cachedSelectValue;
+  }
 }
 
 // ✅ 5. อัปเกรดระบบลบ ให้รู้ว่าลบจากหน้าค้นหา
@@ -1339,6 +1351,7 @@ function toggleItem(rowId, productName, category, newStatus) {
   fetch(updateUrl)
     .then(res => res.json())
     .then(newMenuData => { 
+      currentCat = category; // 🚀 ล็อคเป้าโฟกัสให้อยู่หมวดหมู่เดิม ไม่กระโดดหนี
       renderMenuAccordion(newMenuData); 
       showToast("✅ อัปเดตสถานะเป็น: " + newStatus); 
     });
@@ -1465,6 +1478,12 @@ function next() {
  // 📄 🚀 ระบบรายงาน PDF หน้าบ้าน 100% (pdfmake Engine - ไร้เซิร์ฟเวอร์!)
  async function downloadSummaryReport() {
    if (!allOrders || allOrders.length === 0) return showAlert("ไม่มีข้อมูลออเดอร์ในระบบ");
+
+   // 🚀 ตรวจจับ LINE In-App Browser ป้องกันปัญหาโหลด PDF ไม่ได้
+   if (navigator.userAgent.indexOf("Line") > -1) {
+     return showAlert("⚠️ ไม่สามารถดาวน์โหลดไฟล์ผ่านแอป LINE ได้โดยตรง\n\nกรุณากดปุ่ม 3 จุด (มุมขวาบน) แล้วเลือก 'เปิดในเบราว์เซอร์อื่น' (Chrome/Safari) เพื่อใช้งานฟังก์ชันดาวน์โหลดครับ");
+   }
+
    const btn = document.getElementById('summaryBtn');
    const originalText = btn.innerHTML;
    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
@@ -1659,10 +1678,10 @@ function next() {
             delete menuObj.categorySettings[oldCatName];
         }
 
+        currentCat = newName; // 🚀 ย้ายขึ้นมาล็อคเป้า "ก่อน" สั่งวาดหน้าจอใหม่
         renderMenuAccordion(menuObj);
         closeM('editCatModal');
         isUnsaved = true;
-        currentCat = newName; 
         
         const saveBtn = document.getElementById('saveOrderBtn');
         if (saveBtn) saveBtn.style.display = 'inline-flex';

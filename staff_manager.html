@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Access Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root {
+      --bg-dark: #111827;
+      --bg-card: #1F2937;
+      --border: #374151;
+      --text-main: #F9FAFB;
+      --text-sub: #9CA3AF;
+      --primary-red: #ef4444;
+      --hover-red: #dc2626;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --blue: #3b82f6;
+    }
+
+    body { 
+      font-family: 'Prompt', sans-serif; 
+      background-color: var(--bg-dark); 
+      color: var(--text-main); 
+      margin: 0; 
+      padding: 30px; 
+    }
+    
+    .header-container { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 2px solid var(--border); 
+      padding-bottom: 20px; 
+      margin-bottom: 30px; 
+    }
+    
+    .title { font-size: 26px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    .title i { color: var(--primary-red); }
+    .subtitle { color: var(--text-sub); font-size: 14px; margin-top: 5px; }
+    
+    /* Buttons */
+    .btn { 
+      border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; 
+      font-family: 'Prompt'; font-weight: 600; transition: all 0.3s ease; 
+      display: inline-flex; align-items: center; gap: 8px; font-size: 14px;
+    }
+    .btn-primary { background: var(--primary-red); color: white; }
+    .btn-primary:hover { background: var(--hover-red); box-shadow: 0 0 15px rgba(239,68,68,0.3); transform: translateY(-2px); }
+    
+    .btn-icon { background: transparent; color: var(--text-sub); padding: 8px; border-radius: 6px; font-size: 16px; }
+    .btn-icon:hover { background: var(--border); color: white; }
+    .btn-icon.edit:hover { color: var(--blue); }
+    .btn-icon.ban:hover { color: var(--primary-red); }
+    .btn-icon.unban:hover { color: var(--success); }
+
+    /* Table */
+    .table-container { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #1f2937; padding: 18px 20px; font-size: 13px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--border); }
+    td { padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 15px; vertical-align: middle; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    tr:last-child td { border-bottom: none; }
+
+    /* Badges */
+    .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .badge-admin { background: rgba(59, 130, 246, 0.1); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-stock { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .status-active .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-banned .status-dot { background: var(--primary-red); box-shadow: 0 0 8px var(--primary-red); }
+    .status-banned { color: var(--text-sub); text-decoration: line-through; }
+
+    .pin-display { font-family: monospace; font-size: 16px; background: #111827; padding: 4px 10px; border-radius: 6px; color: #E5E7EB; border: 1px solid #374151; letter-spacing: 2px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.3s ease; }
+    .modal-overlay.show { display: flex; opacity: 1; }
+    .modal-card { background: var(--bg-card); width: 400px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease; }
+    .modal-overlay.show .modal-card { transform: scale(1); }
+    
+    .modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border); font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+    .modal-footer { padding: 15px 25px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: 13px; color: var(--text-sub); }
+    .form-control { background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 8px; font-family: 'Prompt'; font-size: 15px; outline: none; transition: 0.3s; }
+    .form-control:focus { border-color: var(--primary-red); box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
+    
+    .btn-cancel { background: transparent; color: var(--text-sub); }
+    .btn-cancel:hover { background: var(--border); color: white; }
+
+    /* SweetAlert Override */
+    .swal2-popup { font-family: 'Prompt', sans-serif !important; background: var(--bg-card) !important; border-radius: 16px !important; border: 1px solid var(--border) !important; color: white !important; }
+    .swal2-title { color: white !important; }
+    .swal2-html-container { color: var(--text-sub) !important; }
+
+    /* Tabs */
+    .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
+    .tab-btn { background: transparent; color: var(--text-sub); border: 1px solid transparent; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 600; font-size: 15px; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+    .tab-btn:hover { background: var(--border); color: white; }
+    .tab-btn.active { background: var(--bg-card); color: var(--primary-red); border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .tab-content { display: none; animation: fadeIn 0.3s; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-container">
+    <button class="tab-btn active" onclick="switchTab('staff', this)"><i class="fas fa-users-cog"></i> STAFF ACCESS</button>
+    <button class="tab-btn" onclick="switchTab('guard', this)"><i class="fas fa-shield-halved"></i> NITRO GUARD</button>
+  </div>
+
+  <!-- ================= STAFF TAB ================= -->
+  <div id="tab-staff" class="tab-content active">
+    <div class="header-container" style="border-bottom: none; margin-bottom: 15px;">
+      <div>
+        <div class="title"><i class="fas fa-users-cog"></i> STAFF ACCESS TERMINAL</div>
+        <div class="subtitle">ระบบจัดการสิทธิ์และรหัสผ่านพนักงาน (Master Database)</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> เพิ่มพนักงานใหม่</button>
+    </div>
+  
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ชื่อพนักงาน</th>
+            <th>รหัสเข้าใช้ (PIN)</th>
+            <th>ระดับสิทธิ์</th>
+            <th>สถานะ</th>
+            <th style="text-align: right;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="staffTableBody">
+          <!-- ข้อมูลจำลอง (Mock Data) -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= GUARD TAB ================= -->
+  <div id="tab-guard" class="tab-content">
+    <div class="header-container" style="border-bottom: none; margin-bottom: 15px;">
+      <div>
+        <div class="title"><i class="fas fa-shield-halved"></i> NITRO GUARD TERMINAL</div>
+        <div class="subtitle">ระบบรักษาความปลอดภัยสูงสุด และจัดการ Blacklist อุปกรณ์ (Device ID)</div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>วันเวลา</th>
+            <th>ข้อมูลลูกค้า</th>
+            <th>สาขา</th>
+            <th>รหัสประจำเครื่อง (Device ID)</th>
+            <th style="text-align: center;">คำสั่งควบคุม (Action)</th>
+          </tr>
+        </thead>
+        <tbody id="guardTableBody">
+          <tr><td colspan="5" align="center" style="padding:30px; color:var(--text-sub);">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Staff -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="modalTitle">เพิ่มพนักงานใหม่</span>
+        <i class="fas fa-times" style="cursor: pointer; color: var(--text-sub);" onclick="closeModal()"></i>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>ชื่อพนักงาน (Name)</label>
+          <input type="text" id="sName" class="form-control" placeholder="เช่น บอสเบลล์">
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่าน 4 หลัก (PIN)</label>
+          <input type="text" id="sPin" class="form-control" placeholder="****" maxlength="4" style="font-family: monospace; letter-spacing: 5px; font-size: 18px;">
+        </div>
+        <div class="form-group">
+          <label>ระดับสิทธิ์ (Role)</label>
+          <select id="sRole" class="form-control">
+            <option value="manager">ผู้จัดการ (Manager / Admin)</option>
+            <option value="stock">พนักงานครัว (Stock / KDS)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="saveStaff()"><i class="fas fa-save"></i> บันทึกข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ================= TABS LOGIC =================
+  function switchTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btnElement.classList.add('active');
+  }
+
+  // ================= STAFF LOGIC (API Connected) =================
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwiFMRKwx__Gj2tTPgOsd4qe8BXKxgv78P7gMEsL9PejXbHkjRHFrO8kyOXahCbtt81/exec";
+  let staffData = [];
+  let currentEditRowId = null;
+
+  function loadStaff() {
+    document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="5" align="center" style="padding:40px; color:var(--text-sub);"><i class="fas fa-spinner fa-spin"></i> กำลังเชื่อมต่อฐานข้อมูลพนักงาน...</td></tr>';
+    fetch(GAS_URL + "?action=getStaffList")
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'success') {
+          staffData = data.data;
+          renderTable();
+        }
+      }).catch(err => {
+        document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="5" align="center" style="padding:40px; color:#ef4444;">โหลดข้อมูลล้มเหลว กรุณารีเฟรช</td></tr>';
+      });
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('staffTableBody');
+    if (staffData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" align="center" style="padding:40px; color:var(--text-sub);">ยังไม่มีข้อมูลพนักงานในระบบ</td></tr>';
+      return;
+    }
+    
+    let html = '';
+    staffData.forEach((staff, index) => {
+      const isBanned = staff.status === 'Banned';
+      const rowClass = isBanned ? 'status-banned' : 'status-active';
+      const roleBadge = staff.role === 'manager' 
+        ? '<span class="badge badge-admin"><i class="fas fa-user-shield"></i> Manager</span>' 
+        : '<span class="badge badge-stock"><i class="fas fa-box"></i> Stock KDS</span>';
+      
+      const actionBtn = isBanned 
+        ? `<button class="btn-icon unban" title="ปลดแบน" onclick="toggleBan(${index})"><i class="fas fa-user-check"></i></button>`
+        : `<button class="btn-icon ban" title="ระงับการใช้งาน" onclick="toggleBan(${index})"><i class="fas fa-user-slash"></i></button>`;
+
+      html += `
+        <tr class="${rowClass}">
+          <td style="font-weight: 600; color: ${isBanned ? '#6b7280' : 'white'};">${staff.name}</td>
+          <td><span class="pin-display">${staff.pin}</span></td>
+          <td>${roleBadge}</td>
+          <td><span class="status-dot"></span>${isBanned ? 'ถูกระงับสิทธิ์' : 'ใช้งานปกติ'}</td>
+          <td style="text-align: right;">
+            <button class="btn-icon edit" title="แก้ไข" onclick="openModal(${index})" ${isBanned ? 'disabled style="opacity:0.2;"' : ''}><i class="fas fa-edit"></i></button>
+            ${actionBtn}
+            <button class="btn-icon ban" title="ลบทิ้ง" onclick="deleteStaff(${index})"><i class="fas fa-trash-alt"></i></button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }
+
+  function openModal(index = null) {
+    document.getElementById('staffModal').classList.add('show');
+    if (index !== null) {
+      document.getElementById('modalTitle').innerText = "แก้ไขพนักงาน";
+      document.getElementById('sName').value = staffData[index].name;
+      document.getElementById('sPin').value = staffData[index].pin;
+      document.getElementById('sRole').value = staffData[index].role;
+      currentEditRowId = staffData[index].rowId;
+    } else {
+      document.getElementById('modalTitle').innerText = "เพิ่มพนักงานใหม่";
+      document.getElementById('sName').value = '';
+      document.getElementById('sPin').value = '';
+      document.getElementById('sRole').value = 'manager';
+      currentEditRowId = null;
+    }
+    setTimeout(() => document.getElementById('sName').focus(), 100);
+  }
+
+  function closeModal() { document.getElementById('staffModal').classList.remove('show'); }
+
+  function sendStaffAction(payload) {
+    Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), background: '#1F2937', color: '#E5E7EB' });
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "saveStaffAction", ...payload }) })
+    .then(res => res.json()).then(data => {
+        if(data.status === 'success') {
+            staffData = data.data; // อัปเดตข้อมูลใหม่ยกแผง
+            renderTable();
+            Swal.fire({ title: 'สำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false, background: '#1F2937', color: '#E5E7EB' });
+        }
+    }).catch(() => Swal.fire({ title: 'ผิดพลาด', text: 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ', icon: 'error', background: '#1F2937', color: '#E5E7EB' }));
+  }
+
+  function saveStaff() {
+    const name = document.getElementById('sName').value.trim(), pin = document.getElementById('sPin').value.trim(), role = document.getElementById('sRole').value;
+    if (!name || !pin) return Swal.fire({icon: 'warning', title: 'กรอกข้อมูลไม่ครบ', background: '#1F2937', color: '#E5E7EB'});
+    if (pin.length < 4) return Swal.fire({icon: 'warning', title: 'รหัส PIN ต้องมี 4 หลัก', background: '#1F2937', color: '#E5E7EB'});
+    closeModal();
+    sendStaffAction({ subAction: currentEditRowId ? "edit" : "add", rowId: currentEditRowId, name: name, pin: pin, role: role });
+  }
+
+  function toggleBan(index) {
+    const staff = staffData[index];
+    const newStatus = staff.status === 'Banned' ? 'Active' : 'Banned';
+    Swal.fire({ title: `ยืนยันการ${newStatus === 'Banned' ? 'ระงับสิทธิ์' : 'ปลดแบน'}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: newStatus==='Banned'?'#ef4444':'#10b981', background: '#1F2937', color: '#E5E7EB' })
+    .then((r) => { if (r.isConfirmed) sendStaffAction({ subAction: "ban", rowId: staff.rowId, newStatus: newStatus }); });
+  }
+
+  function deleteStaff(index) {
+    Swal.fire({ title: 'ลบถาวร?', text: "ข้อมูลพนักงานจะหายไปทันที", icon: 'error', showCancelButton: true, confirmButtonColor: '#ef4444', background: '#1F2937', color: '#E5E7EB' })
+    .then((r) => { if (r.isConfirmed) sendStaffAction({ subAction: "delete", rowId: staffData[index].rowId }); });
+  }
+
+  // ดึงข้อมูลครั้งแรกเมื่อเปิดหน้า
+  loadStaff();
+
+  // ================= NITRO GUARD LOGIC =================
+  const firebaseConfig = {
+    apiKey: "AIzaSyD9p-JEXH95pjW6H5IkkHR3O7hkJuxg7v8",
+    authDomain: "coffeetoday-db.firebaseapp.com",
+    projectId: "coffeetoday-db",
+    storageBucket: "coffeetoday-db.firebasestorage.app",
+    messagingSenderId: "949270145151",
+    appId: "1:949270145151:web:ae6cbc6c5c5d54a502b74a"
+  };
+  
+  if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  let blacklistCache = new Set();
+  let currentOrdersSnapshot = null;
+
+  function startGuardSync() {
+    db.collection("blacklist").onSnapshot(blSnapshot => {
+      blacklistCache.clear();
+      blSnapshot.forEach(doc => blacklistCache.add(doc.id));
+      if(currentOrdersSnapshot) renderGuardTable(currentOrdersSnapshot);
+    });
+    
+    db.collection("orders").orderBy("timestamp", "desc").limit(50).onSnapshot(snapshot => {
+      currentOrdersSnapshot = snapshot;
+      renderGuardTable(snapshot);
+    }, error => {
+      console.error("Firebase Snapshot Error: ", error);
+    });
+  }
+
+  function renderGuardTable(snapshot) {
+    if (!snapshot || snapshot.empty) {
+      document.getElementById('guardTableBody').innerHTML = '<tr><td colspan="5" align="center" style="padding:30px; color:var(--text-sub);">ไม่มีข้อมูลออเดอร์</td></tr>';
+      return;
+    }
+
+    let html = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      let time = '-';
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+          try { time = data.timestamp.toDate().toLocaleString('th-TH', { hour12: false }); } catch(e) {}
+      }
+      const deviceId = data.deviceId || "ไม่ระบุตัวตน"; 
+      const rawName = data.name || "ไม่ระบุชื่อ";
+      const safeName = rawName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const isBanned = blacklistCache.has(deviceId);
+
+      const actionBtn = isBanned 
+        ? `<button class="btn-icon unban" title="ปลดแบน" onclick="banDevice('${deviceId}', '${safeName}')"><i class="fas fa-user-check"></i></button>`
+        : `<button class="btn-icon ban" title="ระงับอุปกรณ์" onclick="banDevice('${deviceId}', '${safeName}')"><i class="fas fa-user-slash"></i></button>`;
+      
+      const statusTag = isBanned ? `<span class="status-dot" style="background:var(--primary-red); box-shadow:0 0 8px var(--primary-red);"></span>ถูกบล็อก` : `<span class="status-dot"></span>ปกติ`;
+      const rowClass = isBanned ? 'status-banned' : 'status-active';
+      
+      html += `<tr class="${rowClass}">
+        <td style="color:var(--text-sub);">${time}</td>
+        <td style="font-weight:600; color:${isBanned ? '#6b7280' : 'white'};">
+          ${rawName} <br><small style="color:var(--blue); font-weight:normal;">${data.phone || ''}</small><br>
+          <span style="font-size:12px; margin-top:4px; display:inline-block;">${statusTag}</span>
+        </td>
+        <td>${data.branch || '-'}</td>
+        <td><span class="pin-display" style="font-size:12px; color:#f59e0b;">${deviceId}</span></td>
+        <td align="center">${actionBtn}</td>
+      </tr>`;
+    });
+    document.getElementById('guardTableBody').innerHTML = html;
+  }
+
+  function banDevice(deviceId, customerName) {
+    if (deviceId === "ไม่ระบุตัวตน") return Swal.fire({ icon: 'warning', title: 'ไม่สามารถจัดการได้', text: 'ข้อมูลไม่มี Device ID ครับ', background: '#1F2937', color: '#E5E7EB' });
+    
+    const docRef = db.collection("blacklist").doc(deviceId);
+    docRef.get().then((doc) => {
+      if (doc.exists) {
+        Swal.fire({ title: 'ปลดแบนอุปกรณ์?', html: `ต้องการปลดแบน <b>${customerName}</b> ใช่หรือไม่?`, icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', background: '#1F2937', color: '#E5E7EB' }).then((res) => { if(res.isConfirmed) docRef.delete(); });
+      } else {
+        Swal.fire({ title: 'ยืนยันการแบน?', html: `ต้องการแบน <b>${customerName}</b> ใช่หรือไม่?<br><span style="color:#ef4444; font-size:14px;">เมื่อแบนแล้ว เครื่องนี้จะสั่งออเดอร์ไม่ได้อีกเลย</span>`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', background: '#1F2937', color: '#E5E7EB' }).then((res) => { if(res.isConfirmed) docRef.set({ bannedAt: firebase.firestore.FieldValue.serverTimestamp(), reason: "ก่อกวนระบบ", lastKnownName: customerName }); });
+      }
+    });
+  }
+
+  // สั่งให้ Nitro Guard ทำงานอัตโนมัติ
+  startGuardSync();
+</script>
+</body>
+</html>
+
+<!-- 
+=============================================================================
+🛡️ โค้ดสำหรับไฟล์ Guard.html ใน Google Apps Script 
+ก๊อปปี้ตั้งแต่ <!DOCTYPE html> ด้านล่างนี้ ไปวางในหน้าเว็บแอปได้เลยครับบอส
+=============================================================================
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: 'Prompt', sans-serif; background-color: #111827; color: #E5E7EB; margin: 0; padding: 20px; }
+    #lockScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; }
+    #mainContent { display: none; } 
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ef4444; padding-bottom: 20px; }
+    .title { font-size: 28px; font-weight: 700; color: #ef4444; letter-spacing: 2px; }
+    .subtitle { color: #9CA3AF; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; background: #1F2937; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    th { background: #374151; padding: 15px; text-align: left; font-size: 13px; color: #9CA3AF; letter-spacing: 1px; text-transform: uppercase; }
+    td { padding: 15px; border-bottom: 1px solid #374151; font-size: 14px; vertical-align: middle; }
+    .btn-ban { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-ban:hover { background: #dc2626; box-shadow: 0 0 15px rgba(239,68,68,0.4); transform: translateY(-1px); }
+    .btn-unban { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Prompt'; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-unban:hover { background: #059669; box-shadow: 0 0 15px rgba(16,185,129,0.4); transform: translateY(-1px); }
+    .device-id { background: #111827; padding: 6px 12px; border-radius: 6px; font-family: monospace; color: #F59E0B; font-size: 12px; border: 1px solid #4B5563; }
+    .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-block; margin-top: 5px; }
+    .status-banned { background: #7f1d1d; color: #fecaca; border: 1px solid #ef4444; }
+    .status-active { background: #064e3b; color: #d1fae5; border: 1px solid #10b981; }
+    .pass-input { background: #1F2937; border: 2px solid #374151; color: white; padding: 15px; border-radius: 12px; font-size: 24px; text-align: center; width: 220px; outline: none; font-family: 'Prompt'; letter-spacing: 8px; margin-bottom: 20px; transition: 0.3s; }
+    .pass-input:focus { border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.2); }
+    .swal2-popup { font-family: 'Prompt', sans-serif !important; border-radius: 16px !important; border: 1px solid #374151 !important; }
+  </style>
+</head>
+<body>
+<div id="lockScreen">
+  <i class="fas fa-skull-crossbones" style="font-size: 70px; color: #ef4444; margin-bottom: 25px;"></i>
+  <div style="font-size: 22px; font-weight: bold; margin-bottom: 25px; color: #F3F4F6; letter-spacing: 1px;">MASTER ACCESS ONLY</div>
+  <form onsubmit="event.preventDefault(); verifyMaster();" style="display: flex; flex-direction: column; align-items: center;">
+    <input type="password" id="masterPin" class="pass-input" placeholder="PIN" maxlength="4" autocomplete="current-password">
+    <button type="submit" class="btn-ban" style="width: 220px; padding: 15px; font-size: 16px; justify-content: center;">
+      <i class="fas fa-unlock-alt"></i> UNLOCK TERMINAL
+    </button>
+  </form>
+</div>
+<div id="mainContent">
+  <div class="header">
+    <div class="title"><i class="fas fa-shield-halved"></i> NITRO GUARD TERMINAL</div>
+    <div class="subtitle">ระบบรักษาความปลอดภัยสูงสุด และจัดการ Blacklist อุปกรณ์ (Device ID)</div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr><th>วันเวลา</th><th>ข้อมูลลูกค้า</th><th>สาขา</th><th>รหัสประจำเครื่อง (Device ID)</th><th style="text-align: center;">คำสั่งควบคุม (Action)</th></tr>
+      </thead>
+      <tbody id="guardTableBody"><tr><td colspan="5" align="center">กำลังโหลดข้อมูล...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script>
+  const SECRET_PIN = "9999"; 
+  function verifyMaster() {
+    if(document.getElementById('masterPin').value === SECRET_PIN) {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      startGuardSync(); 
+    } else {
+      Swal.fire({ icon: 'error', title: 'ACCESS DENIED', text: 'รหัสผ่านไม่ถูกต้อง!', background: '#1F2937', color: '#E5E7EB', confirmButtonColor: '#ef4444' });
+      document.getElementById('masterPin').value = '';
+    }
+  }
+  const firebaseConfig = { apiKey: "AIzaSyD9p-JEXH95pjW6H5IkkHR3O7hkJuxg7v8", authDomain: "coffeetoday-db.firebaseapp.com", projectId: "coffeetoday-db", storageBucket: "coffeetoday-db.firebasestorage.app", messagingSenderId: "949270145151", appId: "1:949270145151:web:ae6cbc6c5c5d54a502b74a" };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  let blacklistCache = new Set(), currentOrdersSnapshot = null;
+  function startGuardSync() { db.collection("blacklist").onSnapshot(snap => { blacklistCache.clear(); snap.forEach(doc => blacklistCache.add(doc.id)); if(currentOrdersSnapshot) renderTable(currentOrdersSnapshot); }); db.collection("orders").orderBy("timestamp", "desc").limit(50).onSnapshot(snap => { currentOrdersSnapshot = snap; renderTable(snap); }); }
+  function renderTable(snapshot) {
+    if (!snapshot || snapshot.empty) return document.getElementById('guardTableBody').innerHTML = '<tr><td colspan="5" align="center">ไม่มีข้อมูลออเดอร์</td></tr>';
+    let html = '';
+    snapshot.forEach(doc => {
+      const data = doc.data(), deviceId = data.deviceId || "ไม่ระบุตัวตน", rawName = data.name || "ไม่ระบุชื่อ", safeName = rawName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      let time = '-'; if (data.timestamp && typeof data.timestamp.toDate === 'function') try { time = data.timestamp.toDate().toLocaleString('th-TH', { hour12: false }); } catch(e){}
+      const isBanned = blacklistCache.has(deviceId);
+      const actionBtn = isBanned ? `<button class="btn-unban" onclick="banDevice('${deviceId}', '${safeName}')"><i class="fas fa-user-check"></i> ปลดแบนอุปกรณ์</button>` : `<button class="btn-ban" onclick="banDevice('${deviceId}', '${safeName}')"><i class="fas fa-user-slash"></i> แบนอุปกรณ์นี้</button>`;
+      const statusTag = isBanned ? `<span class="status-badge status-banned">ถูกบล็อกแล้ว</span>` : `<span class="status-badge status-active">ปกติ</span>`;
+      html += `<tr><td style="color:#9CA3AF;">${time}</td><td style="font-weight:600; color:#F3F4F6;">${rawName} <br><small style="color:#60A5FA; font-weight:normal;">${data.phone || ''}</small><br>${statusTag}</td><td>${data.branch || '-'}</td><td><span class="device-id">${deviceId}</span></td><td align="center">${actionBtn}</td></tr>`;
+    }); document.getElementById('guardTableBody').innerHTML = html;
+  }
+  function banDevice(deviceId, customerName) {
+    if (deviceId === "ไม่ระบุตัวตน") return Swal.fire({ icon: 'warning', title: 'ไม่สามารถจัดการได้', text: 'เนื่องจากเป็นออเดอร์เก่าที่ไม่มี Device ID ครับ', background: '#1F2937', color: '#E5E7EB', confirmButtonColor: '#374151' });
+    const docRef = db.collection("blacklist").doc(deviceId);
+    docRef.get().then((doc) => {
+      if (doc.exists) { Swal.fire({ title: 'ปลดแบนอุปกรณ์?', html: `คุณต้องการ <b>"ปลดแบน"</b> ให้ <b>${customerName}</b> ใช่หรือไม่?`, icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', background: '#1F2937', color: '#E5E7EB' }).then((res) => { if (res.isConfirmed) docRef.delete().then(() => Swal.fire({ title: 'สำเร็จ!', text: 'ปลดแบนเรียบร้อย!', icon: 'success', background: '#1F2937', color: '#E5E7EB' })); }); } 
+      else { Swal.fire({ title: 'ยืนยันการแบนอุปกรณ์?', html: `คุณต้องการแบน <b>${customerName}</b> ใช่หรือไม่?<br><span style="color:#ef4444;">เมื่อแบนแล้ว เครื่องนี้จะไม่สามารถสั่งได้อีก</span>`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', background: '#1F2937', color: '#E5E7EB' }).then((res) => { if (res.isConfirmed) docRef.set({ bannedAt: firebase.firestore.FieldValue.serverTimestamp(), reason: "ก่อกวนระบบ", lastKnownName: customerName }).then(() => Swal.fire({ title: 'แบนสำเร็จ!', text: `อุปกรณ์ถูกบล็อกเรียบร้อย`, icon: 'success', background: '#1F2937', color: '#E5E7EB' })); }); }
+    });
+  }
+</script>
+</body>
+</html>
+-->
