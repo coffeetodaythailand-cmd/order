@@ -247,6 +247,9 @@
     <button type="button" onclick="addRow()" style="width:100%; margin-top:10px; padding:15px; border:2px dashed #EEE; border-radius:12px; background:#FAFAFA; color:#999; font-weight:600; cursor:pointer; font-family: 'Prompt';">+ เพิ่มแถวรายการใหม่</button>
   </div>
 
+  <label style="margin-top: 20px;">หมายเหตุ (เพิ่มเติม)</label>
+  <textarea id="cR" class="main-in" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..." style="height: 80px; resize: none; font-family: 'Sarabun';"></textarea>
+
   <button class="submit-btn" onclick="reviewOrder()">ตรวจสอบรายการสั่งซื้อ <i class="fas fa-chevron-right"></i></button>
 </div>
 
@@ -563,13 +566,13 @@
   function toggleHelp() { const menu = document.getElementById('helpMenu'), icon = document.getElementById('helpIcon'), isHidden = menu.style.display === 'none' || menu.style.display === ''; menu.style.display = isHidden ? 'block' : 'none'; icon.className = isHidden ? 'fas fa-times' : 'fas fa-question-circle'; }
   function copyPhone(num) { navigator.clipboard.writeText(num); showError("คัดลอกเบอร์โทรศัพท์แล้ว"); }
   window.saveCartState = function(name, field, val) { if (!cartState[name]) cartState[name] = { stock: '', qty: '' }; cartState[name][field] = val; }; // 🚀 ฟังก์ชันเซฟความจำ
-  function resetOrderUI() { document.querySelectorAll('input').forEach(i => i.value = ''); cartState = {}; document.getElementById('successModal').style.display = 'none'; if(document.querySelector('.tbtn')) document.querySelector('.tbtn').click(); window.scrollTo(0,0); }
+  function resetOrderUI() { document.querySelectorAll('input, textarea').forEach(i => i.value = ''); cartState = {}; document.getElementById('successModal').style.display = 'none'; if(document.querySelector('.tbtn')) document.querySelector('.tbtn').click(); window.scrollTo(0,0); }
   function showError(m) { const t = document.getElementById('errT'); document.getElementById('errM').innerText = m; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); }, 4000); }
 
   // 🛡️ ระบบตรวจสอบออเดอร์ (รวมร่าง: ตรวจเช็คตามพารามิเตอร์ branch)
   function reviewOrder() {
     let d = "", h = "", hasItem = false;
-    const elN = document.getElementById('cN'), elP = document.getElementById('cP'), elE = document.getElementById('cE'), elB = document.getElementById('cB');
+    const elN = document.getElementById('cN'), elP = document.getElementById('cP'), elE = document.getElementById('cE'), elB = document.getElementById('cB'), elR = document.getElementById('cR');
 
     if (!elN.value.trim()) { elN.focus(); elN.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกชื่อผู้สั่ง"); }
     if (!elP.value.trim()) { elP.focus(); elP.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกเบอร์โทรศัพท์"); }
@@ -580,7 +583,7 @@
     if (!elB.value.trim()) { elB.focus(); elB.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกชื่อสาขา"); }
 
     const cleanTxt = (txt) => txt.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c] || c));
-    const name = cleanTxt(elN.value.trim()), phone = cleanTxt(elP.value.trim()), branch = cleanTxt(elB.value.trim()), email = cleanTxt(elE.value.trim());
+    const name = cleanTxt(elN.value.trim()), phone = cleanTxt(elP.value.trim()), branch = cleanTxt(elB.value.trim()), email = cleanTxt(elE.value.trim()), remark = elR ? cleanTxt(elR.value.trim()) : "";
 
     // 🚀 ระบบ Review ใหม่: ดึงข้อมูลจากสมองความจำ (cartState) ล้วนๆ ไม่ต้องสนหน้าจอ
     let hasError = false;
@@ -623,10 +626,12 @@
 
     if (!hasItem) return showError("เลือกสินค้าก่อน");
 
-    h += `<div style="margin-bottom:10px;"><b>ผู้สั่ง:</b> ${name}<br><b>สาขา:</b> ${branch}</div><ul>`;
+    h += `<div style="margin-bottom:10px;"><b>ผู้สั่ง:</b> ${name}<br><b>สาขา:</b> ${branch}</div>`;
+    if (remark) h += `<div style="margin-bottom:10px; color: #b45309; background: #fffbeb; padding: 10px; border-radius: 8px; font-size: 13px;"><b>หมายเหตุ:</b> ${remark}</div>`;
+    h += `<ul>`;
     d.split('\n').filter(Boolean).forEach(line => h += `<li>${line}</li>`);
     
-    pD = { name, phone, email, branch, details: d };
+    pD = { name, phone, email, branch, remark, details: d };
     document.getElementById('rL').innerHTML = h + "</ul>"; document.getElementById('rM').style.display = 'flex';
   }
 
