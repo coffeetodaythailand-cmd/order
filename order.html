@@ -60,14 +60,16 @@
     }
     
     .remark-box {
-      background: #FAFAFA !important;
-      border: 1.5px solid #EAEAEA !important;
-      border-radius: 15px !important;
-      padding: 14px 20px !important;
+      background: #FFF5F7 !important;
+      border: 1.5px dashed #FFB3C1 !important;
+      border-radius: 12px !important;
+      padding: 10px 16px !important;
       transition: all 0.3s ease;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
       font-family: 'Sarabun', sans-serif;
-      font-size: 15px;
+      font-size: 14px;
+    }
+    .remark-box::placeholder {
+      color: #E293A3;
     }
     .remark-box:focus {
       background: #FFF !important;
@@ -264,8 +266,8 @@
     <button type="button" onclick="addRow()" style="width:100%; margin-top:10px; padding:15px; border:2px dashed #EEE; border-radius:12px; background:#FAFAFA; color:#999; font-weight:600; cursor:pointer; font-family: 'Prompt';">+ เพิ่มแถวรายการใหม่</button>
   </div>
 
-  <label style="margin-top: 25px; font-family: 'Prompt';"><i class="fas fa-comment-alt" style="color: #ccc; margin-right: 5px;"></i> หมายเหตุ (เพิ่มเติม)</label>
-  <input type="text" id="cR" class="main-in remark-box" placeholder="ระบุรายละเอียดเพิ่มเติม (เช่น หวานน้อย, แยกน้ำ, ขอใบเสร็จ)...">
+  <label style="margin-top: 25px; font-family: 'Prompt'; color: var(--primary);"><i class="fas fa-comment-dots" style="margin-right: 5px;"></i> หมายเหตุ (เพิ่มเติม)</label>
+  <input type="text" id="cR" class="main-in remark-box" placeholder="ระบุรายละเอียดเพิ่มเติม">
 
   <button class="submit-btn" onclick="reviewOrder()">ตรวจสอบรายการสั่งซื้อ <i class="fas fa-chevron-right"></i></button>
 </div>
