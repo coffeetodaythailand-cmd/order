@@ -1481,7 +1481,7 @@ function next() {
 
    // 🚀 ตรวจจับ LINE In-App Browser ป้องกันปัญหาโหลด PDF ไม่ได้
    if (navigator.userAgent.indexOf("Line") > -1) {
-     return showAlert("⚠️ ไม่สามารถดาวน์โหลดไฟล์ผ่านแอป LINE ได้โดยตรง\n\nกรุณากดปุ่ม 3 จุด (มุมขวาบน) แล้วเลือก 'เปิดในเบราว์เซอร์อื่น' (Chrome/Safari) เพื่อใช้งานฟังก์ชันดาวน์โหลดครับ");
+     return showAlert("⚠️ ไม่สามารถดาวน์โหลดไฟล์ผ่านแอป LINE ได้โดยตรง\n\nกรุณากดปุ่ม 3 จุด (มุมขวาล่าง) แล้วเลือก 'เปิดด้วยเบราว์เซอร์เริ่มต้น' (Chrome/Safari) เพื่อใช้งานฟังก์ชันดาวน์โหลดครับ");
    }
 
    const btn = document.getElementById('summaryBtn');
