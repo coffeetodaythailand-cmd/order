@@ -321,7 +321,6 @@
   let itemsPerPage = 8;
   let currentView = { type: 'category', value: '' }; 
   const GAS_URL = "https://script.google.com/macros/s/AKfycbyhihDfPlnqdOGlqfnvTBeax43pC0MuezYWaL3AQAzYM0zgtrEhMrYH8JFfKdnNd48I/exec";
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuX_00ld_RBON5aiWnTiRHNG9jSACEEjdtEa1akYiD7LDlEWSVHy_APanTDtxjme88ygfm9pXwAFSV/pub?gid=1570352729&single=true&output=csv";
   const CACHE_KEY = "coffee_today_menu_cache";
 
   window.onload = () => { loadMenuData(); };
@@ -335,12 +334,10 @@
 
     const v = new Date().getTime();
     
-    // 🚀 ยิงตรงดึงไฟล์ CSV (ความเร็วแสง 0.2 วินาที)
-    fetch(CSV_URL + "&v=" + v)
-      .then(res => res.text())
-      .then(csvText => {
-          const rawArray = parseCSVtoJSON(csvText);
-          const data = transformToAppData(rawArray);
+    // 🚀 กลับมาใช้ GAS API โดยตรง (หลังบ้านมี Cache Service ทำให้ไวเท่า CSV แล้ว)
+    fetch(GAS_URL + "?action=getClientData&v=" + v)
+      .then(res => res.json())
+      .then(data => {
           appData = data;
           allProducts = [];
           if (data.categories && data.products) {
@@ -361,60 +358,6 @@
           showError("ไม่สามารถโหลดเมนูได้");
           document.getElementById('loading-area').style.display = 'none';
       });
-  }
-
-  // ⚙️ เครื่องบด CSV ให้กลายเป็น Array 
-  function parseCSVtoJSON(csvText) {
-    const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== '');
-    if (rows.length === 0) return [];
-    
-    const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    const result = [];
-    
-    for (let i = 1; i < rows.length; i++) {
-      const rowValues = [];
-      let curVal = '', inQuotes = false;
-      for (let char of rows[i]) {
-          if (char === '"') inQuotes = !inQuotes;
-          else if (char === ',' && !inQuotes) { rowValues.push(curVal); curVal = ''; }
-          else curVal += char;
-      }
-      rowValues.push(curVal);
-
-      let obj = {};
-      headers.forEach((header, index) => {
-        let val = rowValues[index] ? rowValues[index].replace(/(^"|"$)/g, '').trim() : '';
-        obj[header] = val;
-      });
-      result.push(obj);
-    }
-    return result;
-  }
-
-  // 🔄 แปลงข้อมูลให้เข้ากับโครงสร้างหน้าเว็บ
-  function transformToAppData(csvArray) {
-     const categories = [], products = {}, categorySettings = {};
-     
-     // 🛡️ ฟังก์ชันช่วยค้นหา Key แบบ Case-Insensitive รองรับชื่อหัวตารางที่หลากหลาย
-     const findValue = (obj, possibleKeys) => {
-         for (let key in obj) {
-             if (possibleKeys.includes(key.toLowerCase().trim())) return obj[key] ? obj[key].trim() : null;
-         }
-         return null;
-     };
-
-     csvArray.forEach(item => {
-         const cat = findValue(item, ['category', 'หมวดหมู่']) || 'Uncategorized';
-         const name = findValue(item, ['productname', 'ชื่อสินค้า']);
-         const status = findValue(item, ['status', 'สถานะ']) || 'Active';
-         // 🎯 แม้หัวตารางจะชื่อ Stock โค้ดก็จะดึงมาเป็นป้ายกำกับได้ถูกต้อง
-         let display = findValue(item, ['stock', 'display', 'displaytag']) || 'both';
-         display = String(display).toLowerCase().trim();
-
-         if (!categories.includes(cat)) { categories.push(cat); products[cat] = []; categorySettings[cat] = display; } else if (display !== 'both' && categorySettings[cat] === 'both') { categorySettings[cat] = display; }
-         if (name) { products[cat].push({ name: name, status: status }); }
-     });
-     return { categories, products, categorySettings };
   }
 
   function buildProductUI(initData) {

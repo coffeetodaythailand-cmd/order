@@ -206,40 +206,54 @@ async function verifyPinFirebase() {
     }
   } catch (error) {
     console.error("Firebase Auth Error:", error);
-    showToast("⚠️ Firebase ขัดข้อง! กำลังสลับไปใช้ Google Sheets..."); // 🚨 ฟ้องให้บอสรู้ตัวทันที
-    // ถ้า Firebase ล่ม ให้ใช้ GAS Fallback แทน
-    fallbackGasLogin(currentPin);
+        
+        // 🚀 เช็คว่าติดปัญหา Rules บล็อคหรือไม่
+        if(error.message && error.message.includes("Missing or insufficient permissions")) {
+          triggerPinError();
+          showToast("❌ Firebase Rules บล็อคการอ่านข้อมูล! (กรุณาปลดล็อคใน Console)");
+        } else {
+          showToast("⚠️ Firebase ขัดข้อง! กำลังสลับไปใช้ Google Sheets...");
+          fallbackGasLogin(currentPin);
+        }
   }
 }
 
 function fallbackGasLogin(pin) {
   fetch(`${GAS_URL}?action=verifyLogin&pass=${pin}&role=manager`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        const dots = document.querySelectorAll('#pinIndicators .dot');
-        dots.forEach(dot => { dot.style.background = 'var(--green)'; dot.style.borderColor = 'var(--green)'; });
-        
-        setTimeout(() => {
-          document.getElementById('login-overlay').style.opacity = '0';
+    .then(res => res.text())
+    .then(text => {
+      try {
+        const data = JSON.parse(text);
+        if (data.status === 'success') {
+          const dots = document.querySelectorAll('#pinIndicators .dot');
+          dots.forEach(dot => { dot.style.background = 'var(--green)'; dot.style.borderColor = 'var(--green)'; });
+          
           setTimeout(() => {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            document.removeEventListener('keydown', handleKeyboardInput);
-            switchPage('dashboard');
-            document.querySelectorAll('.card').forEach(c => c.classList.add('loading-pulse'));
-          }, 400);
-        }, 300);
+            document.getElementById('login-overlay').style.opacity = '0';
+            setTimeout(() => {
+              document.getElementById('login-overlay').style.display = 'none';
+              document.getElementById('main-app').style.display = 'block';
+              document.removeEventListener('keydown', handleKeyboardInput);
+              switchPage('dashboard');
+              document.querySelectorAll('.card').forEach(c => c.classList.add('loading-pulse'));
+            }, 400);
+          }, 300);
 
-        localStorage.setItem(TOKEN_KEY, data.token);
-        initApp(data.token);
-      } else {
+          localStorage.setItem(TOKEN_KEY, data.token);
+          initApp(data.token);
+        } else {
+          triggerPinError();
+          showToast("❌ " + (data.message || "รหัสผ่านไม่ถูกต้อง"));
+        }
+      } catch (e) {
         triggerPinError();
-        showToast("❌ " + (data.message || "รหัสผ่านไม่ถูกต้อง"));
+        console.error("GAS Error Response:", text);
+        showToast("❌ เซิร์ฟเวอร์ส่งข้อมูลผิดพลาด (ติดต่อแอดมิน)");
       }
     })
     .catch(err => {
       triggerPinError();
+      console.error("GAS Fetch Error:", err);
       showToast("❌ เครือข่ายมีปัญหา ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
     });
 }
