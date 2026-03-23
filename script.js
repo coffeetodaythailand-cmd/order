@@ -29,6 +29,7 @@ let menuPgLim = 10;
 
 // System State
 let pendingApproveId = "";
+let currentManagerCloseId = "";
 let currentDeepSearchQuery = ""; 
 let syncIntervalId = null; // 🛡️ ป้องกัน Interval ซ้อนกัน
 let orderSearchTimeout = null; // ⏱️ Debounce Timer สำหรับค้นหาบิล
@@ -713,6 +714,42 @@ function executeApproveOrder() {
       }
     });
 }
+
+// ==========================================================
+// 👑 God Mode: Manager Close Order (ข้ามสเต็ปไม่ต้องรอครัว)
+// ==========================================================
+window.managerCloseOrder = function(id) {
+  currentManagerCloseId = id;
+  const idElement = document.getElementById('managerConfirmId');
+  if (idElement) idElement.innerText = id;
+  document.getElementById('managerConfirmModal').style.display = 'flex';
+};
+
+window.executeManagerClose = function() {
+  closeM('managerConfirmModal');
+  if (!currentManagerCloseId) return;
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  const updateUrl = GAS_URL + '?action=setOrderStatus&id=' + currentManagerCloseId + '&status=Success&token=' + token;
+  
+  showToast("⏳ กำลังดำเนินการปิดงาน...");
+
+  fetch(updateUrl)
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === 'success') {
+        loadApproveList(token);
+        loadDashboardData(false, token, currentDeepSearchQuery);
+        showToast("✅ ปิดงานสำเร็จ! ข้อมูลอัปเดตเรียบร้อย");
+      } else {
+        showAlert("ไม่สามารถปิดงานได้: " + (res.message || ""));
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      showAlert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย");
+    });
+};
 
 /** ✅ ระบบ Debounce สำหรับค้นหาบิล (หน่วงเวลา 0.5 วิ) */
 function handleOrderSearch() {
