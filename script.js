@@ -1166,7 +1166,7 @@ function buildProductRow(p, idx, catName, isDraggable) {
         
         <!-- 🔥 ช่องกรอกสต็อกอัจฉริยะ (Real-time Firebase) -->
         <div style="display:flex; align-items:center; gap:5px; background:#fdfdfd; padding:4px 8px; border-radius:8px; border:1px solid #e5e7eb; transition: 0.3s;" onfocusin="this.style.borderColor='var(--red)'; this.style.boxShadow='0 0 0 3px rgba(169,29,58,0.1)';" onfocusout="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
-          <i class="fas fa-box" style="font-size:12px; color:#9ca3af;" title="ระบุจำนวนคงเหลือจริง"></i>
+          <span style="font-size:12px; color:#888; font-weight:600; font-family:'Prompt';">สต๊อก</span>
           <input type="number" data-stock-name="${nameHtmlSafe}" value="${currentStock}" placeholder="-" style="width:45px; border:none; background:transparent; text-align:center; font-size:14px; font-weight:bold; color:var(--dark); outline:none;" onchange="updateRealtimeStock('${nameSafe}', this.value)" min="0">
         </div>
 
