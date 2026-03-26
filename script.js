@@ -113,6 +113,56 @@ function escapeHTML(str) {
   });
 }
 
+// 🔥 Firebase Real-time Stock Engine (Hybrid System)
+window.realtimeStock = {};
+
+function initRealtimeStock() {
+  if(!window.db) return;
+  window.db.collection('realtime_stock').onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const pName = change.doc.id;
+      const data = change.doc.data();
+      const stockVal = data.qty;
+      
+      if (change.type === 'removed') {
+          delete window.realtimeStock[pName];
+      } else {
+          window.realtimeStock[pName] = stockVal;
+      }
+      
+      const currentVal = window.realtimeStock[pName] !== undefined ? window.realtimeStock[pName] : '';
+
+      // 🚀 อัปเดตตัวเลขบนหน้าจอทันทีแบบไม่ต้องรอรีเฟรชตาราง
+      const safeQueryName = pName.replace(/"/g, '\\"');
+      const inputs = document.querySelectorAll(`input[data-stock-name="${safeQueryName}"]`);
+      inputs.forEach(input => {
+        // อัปเดตเฉพาะช่องที่ไม่ได้กำลังถูกโฟกัสพิมพ์อยู่ เพื่อไม่ให้ขัดจังหวะ
+        if (document.activeElement !== input) { 
+          input.value = currentVal;
+          const parentDiv = input.parentElement;
+          if (parentDiv) {
+              const oldBg = parentDiv.style.background;
+              parentDiv.style.background = '#dcfce7'; // Effect สีเขียวอ่อนกระพริบ
+              setTimeout(() => parentDiv.style.background = oldBg, 1000);
+          }
+        }
+      });
+    });
+  }, err => {
+    console.error("Real-time Stock Listener Error:", err);
+  });
+}
+
+window.updateRealtimeStock = async function(productName, value) {
+  if(!window.db) return showToast("❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+  const numVal = parseInt(value);
+  const docRef = window.db.collection('realtime_stock').doc(productName);
+  try {
+    if (isNaN(numVal)) { await docRef.delete(); } 
+    else { await docRef.set({ qty: numVal, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); }
+  } catch(e) { showToast("❌ อัปเดตสต็อกล้มเหลว (ตรวจสอบอินเทอร์เน็ต)"); }
+};
+
 // --- 2. System Initialization ---
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -286,6 +336,8 @@ function executeLogout() {
 function initApp(token) { 
   loadDashboardData(false, token);
   loadApproveList(token);
+  
+  initRealtimeStock(); // 🚀 เรียกใช้ระบบฟังเสียงสต็อก Firebase
   
   // 🛡️ Clear existing interval before starting new one (Memory Leak Protection)
   if (syncIntervalId) clearInterval(syncIntervalId);
@@ -807,7 +859,16 @@ function renderTable() {
       : '';
 
     const badgeClass = isSuccessStatus ? 'os-success' : (isPackedStatus ? 'os-packed' : 'os-pending');
-    const itemsFormatted = escapeHTML(item.items || '').replace(/\n/g, '<br>'); // 🛡️ ป้องกัน XSS
+    
+    // 🚀 NITRO FIX: Smart Truncate ย่อรายการสินค้าไม่ให้ดันตารางจนล้นจอ (แสดงสูงสุดแค่ 2 รายการ)
+    const rawItemsList = (item.items || '').split('\n').map(i => i.trim()).filter(i => i !== '');
+    let itemsFormatted = '';
+    if (rawItemsList.length > 2) {
+      itemsFormatted = rawItemsList.slice(0, 2).map(i => escapeHTML(i)).join('<br>') + 
+                       `<div style="margin-top:8px;"><span style="color:var(--blue); font-size:12px; cursor:pointer; font-weight:600; background:#eff6ff; padding:4px 10px; border-radius:8px; border:1px solid #bfdbfe; transition:0.2s;" onclick="viewOrderDetail('${item.id}')" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-layer-group"></i> +ดูเพิ่มอีก ${rawItemsList.length - 2} รายการ</span></div>`;
+    } else {
+      itemsFormatted = rawItemsList.map(i => escapeHTML(i)).join('<br>');
+    }
 
     return `
     <tr class="${isSuccessStatus ? 'row-ready' : ''}">
@@ -1085,6 +1146,10 @@ function buildProductRow(p, idx, catName, isDraggable) {
     sText = (s === 'Active' ? 'ปกติ' : (s === 'SoldOut' ? 'ของหมด' : 'ซ่อนอยู่'));
   const dragAttr = isDraggable ? `draggable="true" ondragstart="dragStartItem(event, ${idx})" ondragover="dragOverItem(event, this)" ondragleave="dragLeaveItem(this)" ondrop="dropItem(event, ${idx}, this)"` : '';
   const nameSafe = p.name.replace(/'/g, "\\'");
+  const nameHtmlSafe = p.name.replace(/"/g, '&quot;'); 
+  
+  // 🚀 ดึงค่าสต็อกแบบ Real-time ล่าสุดมาแสดง (ถ้ามี)
+  const currentStock = (window.realtimeStock && window.realtimeStock[p.name] !== undefined) ? window.realtimeStock[p.name] : '';
 
   return `
     <div class="cat-item" ${dragAttr} style="display:flex; justify-content:space-between; padding:12px 15px; border-bottom:1px solid #F8F9FA; align-items:center; cursor:${isDraggable ? 'grab' : 'default'}; transition: all 0.2s ease;">
@@ -1098,6 +1163,13 @@ function buildProductRow(p, idx, catName, isDraggable) {
         </div>
       </div>
       <div style="display:flex; gap:12px; align-items:center;">
+        
+        <!-- 🔥 ช่องกรอกสต็อกอัจฉริยะ (Real-time Firebase) -->
+        <div style="display:flex; align-items:center; gap:5px; background:#fdfdfd; padding:4px 8px; border-radius:8px; border:1px solid #e5e7eb; transition: 0.3s;" onfocusin="this.style.borderColor='var(--red)'; this.style.boxShadow='0 0 0 3px rgba(169,29,58,0.1)';" onfocusout="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';">
+          <i class="fas fa-box" style="font-size:12px; color:#9ca3af;" title="ระบุจำนวนคงเหลือจริง"></i>
+          <input type="number" data-stock-name="${nameHtmlSafe}" value="${currentStock}" placeholder="-" style="width:45px; border:none; background:transparent; text-align:center; font-size:14px; font-weight:bold; color:var(--dark); outline:none;" onchange="updateRealtimeStock('${nameSafe}', this.value)" min="0">
+        </div>
+
         <select class="status-select" style="padding:4px; font-size:12px; border-radius:6px;" onchange="toggleItem('${p.rowId}', '${nameSafe}', '${catName}', this.value)">
           <option value="Active" ${s === 'Active' ? 'selected' : ''}>ปกติ</option><option value="SoldOut" ${s === 'SoldOut' ? 'selected' : ''}>ของหมด</option><option value="Inactive" ${s === 'Inactive' ? 'selected' : ''}>ซ่อนไว้</option>
         </select>

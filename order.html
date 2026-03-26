@@ -131,8 +131,27 @@
     .modal { background: #FFF; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; border-top: 12px solid var(--primary); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
     .summary-list { text-align: left; margin: 20px 0; background: #FDFDFD; padding: 20px; border-radius: 15px; max-height: 250px; overflow-y: auto; line-height: 1.8; border: 1px solid #F5F5F5; font-size: 14px; }
 
-    #errT { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #A91D3A 0%, #7a152a 100%); color: white; padding: 16px 30px; border-radius: 50px; z-index: 9999; font-family: 'Prompt'; font-size: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(169,29,58,0.4); transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-    #errT.show { bottom: 40px; }
+    /* ✨ Premium Alert Box by Gemini */
+    #errT {
+      position: fixed;
+      bottom: -120px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      background: rgba(45, 49, 51, 0.9);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 14px 25px;
+      border-radius: 16px;
+      z-index: 9999;
+      font-family: 'Prompt', sans-serif; font-weight: 600; font-size: 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      opacity: 0;
+    }
+    #errT.show { bottom: 30px; transform: translateX(-50%) scale(1); opacity: 1; }
+    #errT i { color: #fca5a5; font-size: 18px; }
 
     .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; color: #BBB; }
     .spinner { width: 45px; height: 45px; border: 4px solid #F3F3F3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
@@ -179,6 +198,14 @@
       .qty-in { padding: 6px 0; font-size: 12px; text-align: center; width: 90% !important; margin: 0 auto; display: block; }
       th { font-size: 11px; overflow: hidden; white-space: nowrap; }
       td { padding: 8px 2px; font-size: 11px; line-height: 1.3; }
+
+      /* ✨ Premium Alert Box (Mobile) */
+      #errT {
+        left: 15px; right: 15px; width: auto;
+        transform: translateX(0) scale(0.95);
+      }
+      #errT.show { bottom: 20px; transform: translateX(0) scale(1); }
+
       .fab-btn { width: 45px; height: 45px; font-size: 18px; }
     }
   </style>
@@ -305,6 +332,15 @@
   </div>
 </div>
 
+<div id="customAlertModal" class="overlay">
+  <div class="modal" style="border-top-color: #f59e0b;">
+    <i class="fas fa-exclamation-triangle" style="font-size:60px; color:#f59e0b; margin-bottom:20px;"></i>
+    <h3 id="customAlertTitle" style="margin:0; color:var(--dark);">แจ้งเตือน</h3>
+    <p id="customAlertMessage" style="color:#666; margin:20px 0; font-size:15px; line-height:1.6;"></p>
+    <button onclick="document.getElementById('customAlertModal').style.display='none'" style="width:100%; padding:15px; background:var(--dark); color:#FFF; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">รับทราบ</button>
+  </div>
+</div>
+
 <script>
   // 🚀 ระบบ Routing: ลิ้งก์หลัก order.html คือหน้าปกติ, ถ้ามี ?branch=sc คือหน้าล็อค (พนักงาน)
   const urlParams = new URLSearchParams(window.location.search);
@@ -323,7 +359,56 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycbyhihDfPlnqdOGlqfnvTBeax43pC0MuezYWaL3AQAzYM0zgtrEhMrYH8JFfKdnNd48I/exec";
   const CACHE_KEY = "coffee_today_menu_cache";
 
-  window.onload = () => { loadMenuData(); };
+  // 🚀 Firebase Real-time Stock Listener
+  window.liveStock = {};
+  function initLiveStockListener() {
+    if (!window.db) return;
+    window.db.collection('realtime_stock').onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(change => {
+        const pName = change.doc.id;
+        if (change.type === 'removed') {
+          delete window.liveStock[pName];
+        } else {
+          window.liveStock[pName] = change.doc.data().qty;
+        }
+      });
+      updateLiveStockUI();
+    }, err => console.error("Live Stock Listener Error:", err));
+  }
+
+  window.enforceMax = function(el) {
+      if(el.hasAttribute('max')) {
+          let maxVal = parseInt(el.getAttribute('max'));
+          let curVal = parseInt(el.value);
+          if(curVal > maxVal) {
+              el.value = maxVal;
+              showError(`เหลือสต็อกเพียง ${maxVal} ชิ้น!`);
+          }
+      }
+  };
+
+  function updateLiveStockUI() {
+     document.querySelectorAll('.qi').forEach(input => {
+        const safeHtmlName = input.getAttribute('data-n');
+        if(!safeHtmlName) return;
+        const pName = safeHtmlName.replace(/&quot;/g, '"');
+        
+        if(window.liveStock[pName] !== undefined) {
+           const currentMax = window.liveStock[pName];
+           input.setAttribute('max', currentMax);
+           if(parseInt(input.value) > currentMax) {
+              input.value = currentMax;
+              saveCartState(pName.replace(/'/g, "\\'"), 'qty', currentMax);
+           }
+           // Refresh screen visual smoothly without full re-render
+           const badgeEl = document.getElementById(`badge-${safeHtmlName}`);
+           if(badgeEl && currentMax > 0) badgeEl.innerHTML = `<span style="font-size:10px; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; margin-left:5px; font-weight:bold;">เหลือ ${currentMax}</span>`;
+           else if(badgeEl && currentMax <= 0) badgeEl.innerHTML = '<span class="badge-soldout">หมด</span>';
+        }
+     });
+  }
+
+  window.onload = () => { loadMenuData(); initLiveStockListener(); };
 
   function loadMenuData() {
     document.getElementById('loading-area').style.display = 'flex';
@@ -500,10 +585,29 @@
 
     let h = `<table width="100%"><thead><tr><th>สินค้า ${isSearchView ? '' : `(${paginatedItems.length})`}</th>${isSearchView ? '<th width="120">หมวดหมู่</th>' : ''}<th width="100">คงเหลือ</th><th width="75">สั่ง</th></tr></thead><tbody>`;
     paginatedItems.forEach(p => {
-      const isSoldOut = (p.status === 'SoldOut');
-      const rowClass = isSoldOut ? 'sold-out-row' : '';
-      const inputAttr = isSoldOut ? 'disabled readonly' : '';
-      const badge = isSoldOut ? '<span class="badge-soldout">หมด</span>' : '';
+      let isSoldOut = (p.status === 'SoldOut');
+      let rowClass = isSoldOut ? 'sold-out-row' : '';
+      let inputAttr = isSoldOut ? 'disabled readonly' : '';
+      let badgeHtml = isSoldOut ? '<span class="badge-soldout">หมด</span>' : '';
+      let maxAttr = '';
+      
+      // 🚀 Hybrid Real-time Stock Override
+      if(window.liveStock && window.liveStock[p.name] !== undefined) {
+          const lQty = window.liveStock[p.name];
+          if(lQty <= 0) {
+              isSoldOut = true;
+              rowClass = 'sold-out-row';
+              inputAttr = 'disabled readonly';
+              badgeHtml = '<span class="badge-soldout">หมด</span>';
+          } else {
+              isSoldOut = false;
+              rowClass = '';
+              inputAttr = '';
+              badgeHtml = `<span style="font-size:10px; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; margin-left:5px; font-weight:bold;">เหลือ ${lQty}</span>`;
+              maxAttr = `max="${lQty}"`;
+          }
+      }
+
       const categoryCol = isSearchView ? `<td style="font-size:11px; color:#888;">${p.category}</td>` : '';
       
       // ดึงค่าจากความจำ (ถ้ามีกรอกไว้)
@@ -513,10 +617,10 @@
       const safeHtmlName = p.name.replace(/"/g, '&quot;'); // กันบั๊ก DOM พัง
 
       h += `<tr class="${rowClass}">
-              <td style="padding-right:10px;">${p.name} ${badge}</td>
+              <td style="padding-right:10px;">${p.name} <span id="badge-${safeHtmlName}">${badgeHtml}</span></td>
               ${categoryCol}
               <td><input type="text" class="qty-in si" data-n="${safeHtmlName}" placeholder="..." value="${stockVal}" oninput="saveCartState('${safeName}', 'stock', this.value)" ${inputAttr}></td>
-              <td><input type="number" class="qty-in qi" data-n="${safeHtmlName}" placeholder="0" value="${qtyVal}" oninput="saveCartState('${safeName}', 'qty', this.value)" ${inputAttr}></td>
+              <td><input type="number" class="qty-in qi" data-n="${safeHtmlName}" placeholder="0" value="${qtyVal}" ${maxAttr} oninput="enforceMax(this); saveCartState('${safeName}', 'qty', this.value)" ${inputAttr}></td>
             </tr>`;
     });
     listsContainer.innerHTML = h + `</tbody></table>`;
@@ -531,6 +635,11 @@
   window.saveCartState = function(name, field, val) { if (!cartState[name]) cartState[name] = { stock: '', qty: '' }; cartState[name][field] = val; }; // 🚀 ฟังก์ชันเซฟความจำ
   function resetOrderUI() { document.querySelectorAll('input, textarea').forEach(i => i.value = ''); cartState = {}; document.getElementById('successModal').style.display = 'none'; if(document.querySelector('.tbtn')) document.querySelector('.tbtn').click(); window.scrollTo(0,0); }
   function showError(m) { const t = document.getElementById('errT'); document.getElementById('errM').innerText = m; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); }, 4000); }
+  function customAlert(title, message) {
+    document.getElementById('customAlertTitle').innerText = title;
+    document.getElementById('customAlertMessage').innerHTML = message;
+    document.getElementById('customAlertModal').style.display = 'flex';
+  }
 
   // 🛡️ ระบบตรวจสอบออเดอร์ (รวมร่าง: ตรวจเช็คตามพารามิเตอร์ branch)
   function reviewOrder() {
@@ -639,7 +748,7 @@
 
       const banDoc = await db.collection("blacklist").doc(deviceId).get();
       if (banDoc.exists) {
-        alert("⚠️ ขออภัย! อุปกรณ์ของคุณถูกระงับการสั่งซื้อชั่วคราวเนื่องจากตรวจพบความผิดปกติ \nกรุณาติดต่อแอดมินเพื่อตรวจสอบ");
+        customAlert("ระงับการใช้งาน", "⚠️ ขออภัย! อุปกรณ์ของคุณถูกระงับการสั่งซื้อชั่วคราวเนื่องจากตรวจพบความผิดปกติ <br>กรุณาติดต่อแอดมินเพื่อตรวจสอบ");
         cBtn.innerText = "ถูกระงับการเข้าถึง"; cBtn.disabled = true; return; 
       }
 
@@ -647,17 +756,78 @@
 
       const counterRef = db.collection("metadata").doc("counters");
       let realOrderId = "";
+
+      // 🚀 รวบรวมข้อมูลสต็อกที่ต้องหัก
+      let itemsToDeduct = {};
+      for (let pName in cartState) {
+        let qVal = parseInt(cartState[pName].qty) || 0;
+        // 🐞 BUG FIX (Critical): บังคับให้เช็คสต็อกทุกชิ้นใน Transaction ห้ามเชื่อ Cache ที่หน้าบ้าน
+        if (qVal > 0) {
+           itemsToDeduct[pName] = (itemsToDeduct[pName] || 0) + qVal;
+        }
+      }
+      const cns = document.querySelectorAll('.cn'), cqs = document.querySelectorAll('.cq');
+      for (let i = 0; i < cqs.length; i++) {
+        let qVal = parseInt(cqs[i].value) || 0; 
+        let n = cns[i].value.trim();
+        let safeName = n.replace(/[,()]/g, '');
+        // 🐞 BUG FIX (Critical): บังคับให้เช็คสต็อกทุกชิ้นใน Transaction ห้ามเชื่อ Cache ที่หน้าบ้าน
+        if (safeName && qVal > 0) {
+           itemsToDeduct[safeName] = (itemsToDeduct[safeName] || 0) + qVal;
+        }
+      }
       
       // 🚀 NITRO FIX: ป้องกัน Firebase Transaction ค้างเมื่อมีคนกดพร้อมกันเยอะๆ (Contention Fallback)
+      // 🚀 Atomic Transaction: ป้องกันสั่งของชนกันแบบ 100%
       try {
         realOrderId = await db.runTransaction(async (transaction) => {
+          // 1. อ่านข้อมูลสต็อกที่ต้องใช้ทั้งหมด
+          let stockDocs = {};
+          for(let pName in itemsToDeduct) {
+              let sRef = db.collection('realtime_stock').doc(pName);
+              stockDocs[pName] = { ref: sRef, snap: await transaction.get(sRef) };
+          }
+
+          // 2. เช็คว่าพอไหม
+          let outOfStockList = [];
+          for(let pName in itemsToDeduct) {
+              let reqQty = itemsToDeduct[pName];
+              let snap = stockDocs[pName].snap;
+              if(snap.exists) {
+                  let curQty = snap.data().qty || 0;
+                  if(curQty < reqQty) outOfStockList.push(`${pName} (เหลือ ${curQty} ชิ้น)`);
+              }
+          }
+          if(outOfStockList.length > 0) {
+              return Promise.reject(new Error(`OUT_OF_STOCK_MULTI|${outOfStockList.join('^')}`));
+          }
+
+          // 3. รัน Counter
           const doc = await transaction.get(counterRef);
           let nextId = 1;
           if (doc.exists) nextId = (doc.data().lastOrderId || 0) + 1;
           transaction.set(counterRef, { lastOrderId: nextId }, { merge: true });
+          
+          // 4. หักสต็อก
+          for(let pName in itemsToDeduct) {
+              let snap = stockDocs[pName].snap;
+              if(snap.exists) {
+                  let curQty = snap.data().qty || 0;
+                  transaction.update(stockDocs[pName].ref, { qty: curQty - itemsToDeduct[pName] });
+              }
+          }
+
           return "ORD-" + ("0000" + nextId).slice(-4);
         });
       } catch (txErr) {
+        if(txErr.message && txErr.message.includes('OUT_OF_STOCK_MULTI')) {
+           let parts = txErr.message.split('|');
+           let itemsListHtml = parts[1].split('^').map(item => `<li style="margin-bottom:5px;">${item}</li>`).join('');
+           customAlert("⚠️ สินค้าคงเหลือไม่เพียงพอ", `ขออภัยครับ มีสินค้าบางรายการคงเหลือไม่พอสำหรับออเดอร์นี้:<br><ul style="color:#A91D3A; font-weight:bold; text-align:left; margin:15px 0; background:#fff5f5; padding:15px 15px 15px 35px; border-radius:10px; border:1px solid #fecdd3; max-height: 180px; overflow-y: auto;">${itemsListHtml}</ul>กรุณาปรับลดจำนวนสินค้าและทำรายการใหม่อีกครั้งครับ`);
+           document.getElementById('rM').style.display = 'none'; 
+           cBtn.innerText = "ยืนยันสั่ง"; cBtn.disabled = false;
+           return;
+        }
         console.warn("⚠️ Transaction busy, generating dynamic fallback ID");
         // ถ้าแย่งกันเขียนจนพัง ให้ใช้เวลาระดับมิลลิวินาทีเป็นเลขออเดอร์แทน ป้องกันลูกค้ารอเก้อ
         realOrderId = "ORD-F" + Date.now().toString().slice(-5); 
