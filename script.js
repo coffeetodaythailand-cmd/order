@@ -1008,6 +1008,7 @@ function renderClosedOrdersTable() {
       <td style="color:#666; font-size:13px;">${item.date}</td>
       <td><b style="color:#333; font-size:14px;">${item.branch}</b></td>
       <td style="font-weight:600; font-size:14px; color:#555;">${item.customer}</td>
+      <td style="font-weight:700; color:var(--blue); font-size:14px;">${item.phone || '-'}</td>
       <td style="font-size:13px; color:#666; line-height:1.3;">${itemsFormatted}</td>
       <td align="center">
         <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
@@ -1021,7 +1022,7 @@ function renderClosedOrdersTable() {
   
   const tableBody = document.getElementById('coB');
   if (currentFilteredClosedOrdersCount === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" align="center" style="padding:100px; color:#BBBBBB; font-style:italic;">ไม่พบออเดอร์ที่ปิดแล้ว...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" align="center" style="padding:100px; color:#BBBBBB; font-style:italic;">ไม่พบออเดอร์ที่ปิดแล้ว...</td></tr>';
   } else {
     tableBody.innerHTML = rowsArray;
   }
@@ -1070,12 +1071,19 @@ function executeDeleteOrder() {
 
 function viewOrderDetail(orderId) {
   
-  const foundOrder = allOrders.find(function(order) { 
+  // 🚀 FIX: ค้นหาจากทั้งออเดอร์ปกติ (allOrders) และออเดอร์ที่ปิดแล้ว (allClosedOrders)
+  let foundOrder = allOrders.find(function(order) { 
     return order.id === orderId; 
   });
   
+  if (!foundOrder) {
+    foundOrder = allClosedOrders.find(function(order) {
+      return order.id === orderId;
+    });
+  }
+  
   if(!foundOrder) {
-    return;
+    return showToast("🔍 ไม่พบรายละเอียดออเดอร์ในระบบ (อาจถูกลบไปแล้ว)");
   }
   
   currentViewingOrderId = orderId;
