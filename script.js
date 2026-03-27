@@ -864,8 +864,8 @@ function renderTable() {
     const rawItemsList = (item.items || '').split('\n').map(i => i.trim()).filter(i => i !== '');
     let itemsFormatted = '';
     if (rawItemsList.length > 2) {
-      itemsFormatted = rawItemsList.slice(0, 2).map(i => escapeHTML(i)).join('<br>') + 
-                       `<div style="margin-top:8px;"><span style="color:var(--blue); font-size:12px; cursor:pointer; font-weight:600; background:#eff6ff; padding:4px 10px; border-radius:8px; border:1px solid #bfdbfe; transition:0.2s;" onclick="viewOrderDetail('${item.id}')" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-layer-group"></i> +ดูเพิ่มอีก ${rawItemsList.length - 2} รายการ</span></div>`;
+      itemsFormatted = rawItemsList.slice(0, 2).map(i => escapeHTML(i)).join('<br>') +
+                       `<div style="margin-top:8px;"><span style="color:var(--blue); font-size:12px; cursor:pointer; font-weight:600; background:#eff6ff; padding:4px 10px; border-radius:8px; border:1px solid #bfdbfe; transition:0.2s; white-space: nowrap;" onclick="viewOrderDetail('${item.id}')" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fas fa-layer-group"></i> +ดูเพิ่มอีก ${rawItemsList.length - 2} รายการ</span></div>`;
     } else {
       itemsFormatted = rawItemsList.map(i => escapeHTML(i)).join('<br>');
     }
