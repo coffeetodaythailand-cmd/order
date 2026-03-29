@@ -12,9 +12,9 @@
   --border-color: #EEEEEE;
   --blue: #3498db;
   --orange: #f39c12;
-  --shadow-soft: 0 4px 15px rgba(0,0,0,0.02);
-  --shadow-md: 0 8px 25px rgba(0,0,0,0.06);
-  --card-radius: 30px;
+  --shadow-soft: 0 2px 8px rgba(0,0,0,0.04); /* Enterprise flat shadow */
+  --shadow-md: 0 8px 16px rgba(0,0,0,0.06); /* Enterprise hover shadow */
+  --card-radius: 12px; /* Enterprise sharp corners */
 }
 
 * {
@@ -210,12 +210,12 @@ body {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 12px 20px;
-  margin-bottom: 8px;
-  border-radius: 16px;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  border-radius: 8px;
   color: #666;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   font-weight: 500;
   font-size: 14px;
 }
@@ -223,14 +223,15 @@ body {
 .menu-item:hover {
   background-color: #f9f9f9;
   color: var(--dark);
+  transform: translateX(6px); /* Micro-interaction: เลื่อนเข้าหาผู้ใช้ */
 }
 
 .menu-item.active {
   background-color: #FEF2F2;
   color: var(--red);
-  font-weight: 700;
-  border-left: 4px solid var(--red);
-  border-radius: 0 12px 12px 0;
+  font-weight: 600;
+  border-left: 3px solid var(--red);
+  border-radius: 0 8px 8px 0;
 }
 
 .menu-item i {
@@ -377,10 +378,10 @@ body {
   background-color: var(--white); 
   padding: 40px; 
   border-radius: var(--card-radius); 
-  border: none; /* Remove border for cleaner look */
+  border: 1px solid rgba(0,0,0,0.02); /* Breathing room boundary */
   margin-bottom: 35px; 
   box-shadow: var(--shadow-soft); /* Soft shadow only */
-  transition: transform 0.4s ease, box-shadow 0.4s ease; 
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
   overflow: hidden;
   position: relative;
   max-width: 100%;
@@ -389,7 +390,7 @@ body {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-4px); /* ยกตัวขึ้นนุ่มนวลเวลาเอาเมาส์วาง */
 }
 
 .chart-grid { 
@@ -423,13 +424,13 @@ body {
 */
 .search-row {
   background-color: var(--white);
-  border-radius: 12px;
-  padding: 8px 15px;
+  border-radius: 8px;
+  padding: 8px 16px;
   margin-bottom: 0;
   display: inline-flex;
   vertical-align: middle;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: 1px solid #EEEEEE;
   box-shadow: var(--shadow-soft);
   max-width: 260px; 
@@ -458,7 +459,7 @@ body {
   gap: 12px; 
   background-color: #F8F9FA; 
   padding: 10px 20px; 
-  border-radius: 18px;
+  border-radius: 10px;
   flex-wrap: wrap; /* ✅ หัวใจหลัก: ทำให้ปุ่มตกบรรทัดใหม่ได้เมื่อที่ไม่พอ */
   justify-content: flex-end;
   align-items: center;
@@ -569,7 +570,7 @@ body {
 */
 .receipt-card {
   background-color: #FFFFFF; 
-  border-radius: 25px; 
+  border-radius: 16px; 
   width: 95%; 
   max-width: 460px;
   padding: 40px; 
@@ -624,7 +625,7 @@ body {
   background-color: #f0fdf4;
   border: 1px solid #dcfce7; 
   padding: 15px 20px; /* ลดขนาดพื้นที่ด้านในรายการ  */
-  border-radius: 20px; /* ปรับความโค้งให้ดูทันสมัยขึ้น  */
+  border-radius: 12px; /* ปรับความโค้งให้ดูเป็นทางการ  */
   display: flex; 
   justify-content: space-between; 
   align-items: center;
@@ -659,8 +660,8 @@ body {
 
 .modal-card {
   background-color: #FFFFFF; 
-  padding: 55px; 
-  border-radius: 40px;
+  padding: 40px; 
+  border-radius: 16px;
   width: 100%; 
   max-width: 480px; 
   text-align: left;
@@ -718,8 +719,8 @@ tr:hover td {
   =========================================================================
 */
 .btn { 
-  padding: 10px 24px; 
-  border-radius: 18px; 
+  padding: 8px 20px; 
+  border-radius: 8px; 
   border: none; 
   font-family: 'Prompt'; 
   font-weight: 600; 
@@ -730,6 +731,10 @@ tr:hover td {
   gap: 12px; 
   justify-content: center;
   outline: none;
+}
+
+.btn:active {
+  transform: scale(0.96) !important; /* Micro-interaction: ปุ่มยุบตัวเวลาคลิก */
 }
 
 .btn-red { 
@@ -808,8 +813,8 @@ tr:hover td {
 
 .chip {
     background-color: var(--white);
-    padding: 4px 10px; /* ปรับให้กระชับขึ้นอีก */
-    border-radius: 12px; /* ลดความโค้งให้ดูผู้ดีขึ้น */
+    padding: 4px 12px; 
+    border-radius: 6px; /* Enterprise Sharp */
     border: 1px solid #EEEEEE; 
     font-family: 'Prompt'; 
     cursor: pointer !important;
@@ -1014,7 +1019,7 @@ tr:hover td {
 
     @media (max-width: 768px) {
       .nav { padding: 15px 20px; }
-      .card { padding: 25px; border-radius: 25px; }
+      .card { padding: 20px; border-radius: 12px; } /* Enterprise: ลดความโค้งในมือถือให้เท่าคอม */
       .section-header { flex-direction: column; align-items: flex-start; gap: 15px; width: 100%; }
       
       .filter-panel { 
@@ -1027,7 +1032,7 @@ tr:hover td {
         width: 46%; 
         background: #FFFFFF; 
         padding: 8px; 
-        border-radius: 10px;
+        border-radius: 8px; /* Enterprise: ช่องกรองวันที่ในมือถือเหลี่ยมขึ้น */
         text-align: center;
       }
       .filter-panel span { display: none; } 
@@ -1238,7 +1243,7 @@ td .fa-trash-alt:hover {
 }
 .premium-modal {
   background: #FFFFFF; width: 90%; max-width: 420px;
-  border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+  border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15);
   overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal-header {
@@ -1248,7 +1253,7 @@ td .fa-trash-alt:hover {
 .modal-header h3 { margin: 0; font-family: 'Prompt'; font-size: 18px; color: #1A1C1E; }
 .close-btn {
   background: #F3F4F6; border: none; width: 32px; height: 32px;
-  border-radius: 50%; color: #6B7280; cursor: pointer; transition: 0.2s;
+  border-radius: 8px; color: #6B7280; cursor: pointer; transition: 0.2s;
   display: flex; align-items: center; justify-content: center;
 }
 .close-btn:hover { background: #E5E7EB; color: #A91D3A; transform: rotate(90deg); }
@@ -1258,8 +1263,8 @@ td .fa-trash-alt:hover {
   color: #4B5563; margin-bottom: 8px;
 }
 .premium-input {
-  width: 100%; padding: 14px 16px; background: #F9FAFB;
-  border: 1.5px solid #E5E7EB; border-radius: 12px; font-family: 'Sarabun';
+  width: 100%; padding: 12px 14px; background: #F9FAFB;
+  border: 1px solid #E5E7EB; border-radius: 8px; font-family: 'Sarabun';
   font-size: 15px; color: #1A1C1E; transition: 0.2s; box-sizing: border-box;
   outline: none;
 }
@@ -1268,13 +1273,13 @@ td .fa-trash-alt:hover {
 }
 .modal-footer { padding: 20px 24px; background: #F9FAFB; display: flex; gap: 12px; border-top: 1px solid #F3F4F6; }
 .btn-cancel {
-  flex: 1; padding: 14px; background: #FFFFFF; border: 1.5px solid #E5E7EB;
-  border-radius: 14px; font-family: 'Prompt'; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
+  flex: 1; padding: 12px; background: #FFFFFF; border: 1px solid #E5E7EB;
+  border-radius: 8px; font-family: 'Prompt'; font-weight: 600; color: #4B5563; cursor: pointer; transition: 0.2s;
 }
 .btn-cancel:hover { background: #F3F4F6; }
 .btn-primary {
-  flex: 1; padding: 14px; background: #A91D3A; border: none;
-  border-radius: 14px; font-family: 'Prompt'; font-weight: 600; color: #FFFFFF; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(169, 29, 58, 0.25);
+  flex: 1; padding: 12px; background: #A91D3A; border: none;
+  border-radius: 8px; font-family: 'Prompt'; font-weight: 600; color: #FFFFFF; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(169, 29, 58, 0.25);
 }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(169, 29, 58, 0.35); }
 
