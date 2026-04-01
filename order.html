@@ -365,7 +365,7 @@
     if (!window.db) return;
     window.db.collection('realtime_stock').onSnapshot(snapshot => {
       snapshot.docChanges().forEach(change => {
-        const pName = change.doc.id;
+        const pName = change.doc.id.replace(/_SLASH_/g, '/');
         if (change.type === 'removed') {
           delete window.liveStock[pName];
         } else {
@@ -647,7 +647,7 @@
     const elN = document.getElementById('cN'), elP = document.getElementById('cP'), elE = document.getElementById('cE'), elB = document.getElementById('cB'), elR = document.getElementById('cR');
 
     if (!elN.value.trim()) { elN.focus(); elN.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกชื่อผู้สั่ง"); }
-    if (!elP.value.trim()) { elP.focus(); elP.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกเบอร์โทรศัพท์"); }
+    if (!elP.value.trim() || elP.value.trim().length < 9) { elP.focus(); elP.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกเบอร์โทรศัพท์ให้ครบถ้วน (9-10 หลัก)"); }
     if (!elE.value.trim()) { elE.focus(); elE.scrollIntoView({ behavior: 'smooth', block: 'center' }); return showError("กรุณากรอกอีเมลติดต่อ"); }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -694,8 +694,8 @@
         }
         hasItem = true; 
         let rawStock = cartState[pName].stock || "-";
-        const stockVal = rawStock.replace(/[,()]/g, '').replace(/สั่ง:/g, '');
-        d += `${pName} (เหลือ:${stockVal}, สั่ง:${qVal})\n`; 
+          const stockVal = cleanTxt(rawStock).replace(/[,()]/g, '').replace(/สั่ง:/g, '');
+          d += `${cleanTxt(pName)} (เหลือ:${stockVal}, สั่ง:${qVal})\n`; 
       }
     }
     if (hasError) return;
@@ -717,9 +717,9 @@
             return showError(`กรุณาใส่สต็อกของ: ${n}`);
         }
         hasItem = true; 
-        let safeName = n.replace(/[,()]/g, '');
+          let safeName = cleanTxt(n).replace(/[,()]/g, '');
         let rawStock = css[i].value.trim() || "-";
-        const stockVal = rawStock.replace(/[,()]/g, '').replace(/สั่ง:/g, '');
+          const stockVal = cleanTxt(rawStock).replace(/[,()]/g, '').replace(/สั่ง:/g, '');
         d += `${safeName} (เหลือ:${stockVal}, สั่ง:${qVal})\n`;
       }
     }
@@ -784,7 +784,8 @@
           // 1. อ่านข้อมูลสต็อกที่ต้องใช้ทั้งหมด
           let stockDocs = {};
           for(let pName in itemsToDeduct) {
-              let sRef = db.collection('realtime_stock').doc(pName);
+              let safeDocId = pName.replace(/\//g, '_SLASH_');
+              let sRef = db.collection('realtime_stock').doc(safeDocId);
               stockDocs[pName] = { ref: sRef, snap: await transaction.get(sRef) };
           }
 
@@ -822,15 +823,21 @@
       } catch (txErr) {
         if(txErr.message && txErr.message.includes('OUT_OF_STOCK_MULTI')) {
            let parts = txErr.message.split('|');
-           let itemsListHtml = parts[1].split('^').map(item => `<li style="margin-bottom:5px;">${item}</li>`).join('');
+           const cleanTxt = (txt) => txt.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c] || c));
+           let itemsListHtml = parts[1].split('^').map(item => `<li style="margin-bottom:5px;">${cleanTxt(item)}</li>`).join('');
            customAlert("⚠️ สินค้าคงเหลือไม่เพียงพอ", `ขออภัยครับ มีสินค้าบางรายการคงเหลือไม่พอสำหรับออเดอร์นี้:<br><ul style="color:#A91D3A; font-weight:bold; text-align:left; margin:15px 0; background:#fff5f5; padding:15px 15px 15px 35px; border-radius:10px; border:1px solid #fecdd3; max-height: 180px; overflow-y: auto;">${itemsListHtml}</ul>กรุณาปรับลดจำนวนสินค้าและทำรายการใหม่อีกครั้งครับ`);
            document.getElementById('rM').style.display = 'none'; 
            cBtn.innerText = "ยืนยันสั่ง"; cBtn.disabled = false;
            return;
         }
-        console.warn("⚠️ Transaction busy, generating dynamic fallback ID");
-        // ถ้าแย่งกันเขียนจนพัง ให้ใช้เวลาระดับมิลลิวินาทีเป็นเลขออเดอร์แทน ป้องกันลูกค้ารอเก้อ
-        realOrderId = "ORD-F" + Date.now().toString().slice(-5); 
+        // 🚀 [AI FIX] - Eradicate Randomized Fallback Order ID
+        // If the transaction fails for any other reason (e.g., contention),
+        // display an error and ask the user to retry, ensuring ID sequence integrity.
+        console.error("Firebase Transaction Failed:", txErr);
+        customAlert("⚠️ ระบบขัดข้องชั่วคราว", "เกิดปัญหาในการจองเลขออเดอร์ กรุณาลองใหม่อีกครั้งใน 2-3 วินาทีครับ");
+        document.getElementById('rM').style.display = 'none';
+        cBtn.innerText = "ยืนยันสั่ง"; cBtn.disabled = false;
+        return; // Stop execution to prevent creating a random ID.
       }
 
       await db.collection("orders").doc(realOrderId).set({

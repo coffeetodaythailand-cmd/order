@@ -128,7 +128,7 @@ function initRealtimeStock() {
   if(!window.db) return;
   window.db.collection('realtime_stock').onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      const pName = change.doc.id;
+      const pName = change.doc.id.replace(/_SLASH_/g, '/');
       const data = change.doc.data();
       const stockVal = data.qty;
       
@@ -164,7 +164,8 @@ function initRealtimeStock() {
 window.updateRealtimeStock = async function(productName, value) {
   if(!window.db) return showToast("❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
   const numVal = parseInt(value);
-  const docRef = window.db.collection('realtime_stock').doc(productName);
+  const safeDocId = productName.replace(/\//g, '_SLASH_');
+  const docRef = window.db.collection('realtime_stock').doc(safeDocId);
   try {
     if (isNaN(numVal)) { await docRef.delete(); } 
     else { await docRef.set({ qty: numVal, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); }
@@ -658,6 +659,15 @@ function setQuickDateFilter(days, element) {
   const sDateField = document.getElementById('sDate');
   const eDateField = document.getElementById('eDate');
 
+  // 🚀 [AI FIX] Toggle Logic: ถ้าปุ่มเดิมถูกกดซ้ำ ให้ยกเลิกการกรอง (กลับไปดูทั้งหมด)
+  if (element && element.classList.contains('active')) {
+    sDateField.value = '';
+    eDateField.value = '';
+    element.classList.remove('active');
+    applyDateFilter();
+    return; // หยุดการทำงานแค่นี้
+  }
+
   const today = new Date();
   const startDate = new Date();
 
@@ -1096,12 +1106,12 @@ function viewOrderDetail(orderId) {
       const regexMatch = itemLine.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
       if(regexMatch) {
         rowsList += '<tr>';
-        rowsList += '<td style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#444;">' + regexMatch[1] + '</td>';
-        rowsList += '<td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#888;">' + regexMatch[2] + '</td>';
-        rowsList += '<td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:var(--red);">' + regexMatch[3] + '</td>';
+        rowsList += '<td style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#444;">' + escapeHTML(regexMatch[1]) + '</td>';
+        rowsList += '<td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#888;">' + escapeHTML(regexMatch[2]) + '</td>';
+        rowsList += '<td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:var(--red);">' + escapeHTML(regexMatch[3]) + '</td>';
         rowsList += '</tr>';
       } else {
-        rowsList += '<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#777; font-size:13px;">' + itemLine + '</td></tr>';
+        rowsList += '<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; color:#777; font-size:13px;">' + escapeHTML(itemLine) + '</td></tr>';
       }
     }
   });
@@ -1169,9 +1179,9 @@ function downloadPDF() {
       if(parts) {
         // จัดตาราง 3 คอลัมน์ (Product, Last Stock, Qty) ตามตัวอย่าง
         rowsBuilder += '<tr>';
-        rowsBuilder += '<td style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:14px;">' + parts[1] + '</td>';
-        rowsBuilder += '<td align="center" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:14px; color:#666;">' + parts[2] + '</td>';
-        rowsBuilder += '<td align="center" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:16px; font-weight:bold; color:#A91D3A;">' + parts[3] + '</td>';
+                rowsBuilder += '<td style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:14px;">' + escapeHTML(parts[1]) + '</td>';
+                rowsBuilder += '<td align="center" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:14px; color:#666;">' + escapeHTML(parts[2]) + '</td>';
+                rowsBuilder += '<td align="center" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:16px; font-weight:bold; color:#A91D3A;">' + escapeHTML(parts[3]) + '</td>';
         rowsBuilder += '</tr>';
       }
     }
@@ -1896,9 +1906,9 @@ function next() {
         if(line.trim() !== "") {
           const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
           if(match) {
-            rowsHtml += `<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${match[1]}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${match[2]}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">${match[3]}</td></tr>`;
+            rowsHtml += `<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(match[1])}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(match[2])}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">${escapeHTML(match[3])}</td></tr>`;
           } else {
-            rowsHtml += `<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${line}</td></tr>`;
+            rowsHtml += `<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(line)}</td></tr>`;
           }
         }
       });

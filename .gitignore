@@ -1,12 +1,14 @@
-# 🚫 1. ปิดประตูตาย: บล็อคทุกไฟล์และโฟลเดอร์ทั้งหมดไม่ให้ขึ้น Git
-/*
+# 🧠 AI Memory & Brain Data (ห้ามไฟล์สมองกลหลุดขึ้น Git เด็ดขาด)
+Ai-BuH/
+brain_data/
+MEMORY.md
+SESSION_LOGS*.md
+BOSS_ACTION_REQUIRED.md
+SYSTEM_ACCESS.md
 
-# ✅ 2. เปิดช่องพิเศษ: อนุญาตเฉพาะไฟล์ที่ใช้จริงของโปรเจค (Whitelist)
-!.gitignore
-!README.md
-!index.html
-!manager.html
-!order.html
-!stock.html
-!script.js
-!style.css
+# ⚙️ Backend Scripts (ห้ามโค้ดหลังบ้านหลุด)
+Code*.gs
+*.gs
+
+# 💻 Local Editor Settings
+.vscode/
