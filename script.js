@@ -9,8 +9,11 @@
 let bcObj = null; 
 let pcObj = null; 
 let scObj = null;
+let ccObj = null;
 let lastAnalyticsData = null;
 let allOrders = [];
+let rawAnalyticsHistory = []; // 🚀 เก็บข้อมูลดิบก่อนกรองสาขา
+let rawAnalyticsCharts = null;
 let currentFilteredOrdersCount = 0; // 🚀 NITRO FIX: เก็บจำนวนรายการที่ค้นหาเจอจริงๆ
 
 // Pagination State
@@ -482,90 +485,26 @@ function loadDashboardData(smooth, token, searchQ) {
     .then(function(d) {
       if(d.status === 'success' && d.analytics) { // 🛡️ ป้องกันจอขาวเวลาฐานข้อมูลหลังบ้านส่งข้อมูลกราฟมาไม่ครบ
    
-        allOrders = d.analytics.history;
-        renderTable();
+        rawAnalyticsHistory = d.analytics.history || [];
+        rawAnalyticsCharts = d.analytics.charts || null;
         
-        // ==========================================
-        // การคำนวณกราฟแบบ Local Time & Branch Stock
-        // ==========================================
-        let finalChartData = d.analytics.charts;
-        
-        if (!sDateValue && !eDateValue && currentDeepSearchQuery === "") {
-           
-           let branchSum = {};
-           let productSum = {};
-           let stockSum = {}; // เก็บข้อมูล [สาขา] สินค้า
-           
-           // ตั้งเป้าเป็นเที่ยงคืนของเครื่องคุณเบลล์ปัจจุบัน
-           let todayMidnight = new Date();
-           todayMidnight.setHours(0, 0, 0, 0);
-           
-           allOrders.forEach(function(ord) {
-              
-              let dtStr = (ord.date || "").toString().trim(); // 🚀 GOD FIX: กัน Error กรณี Date มี Space นำหน้า
-              // 🚀 NITRO FIX: ป้องกัน Dashboard ตายสนิท หาก Format วันที่ในชีตผิดเพี้ยน
-              let datePartStr = dtStr.split(' ')[0] || "";
-              let timePartStr = dtStr.split(' ')[1] || "00:00";
-              
-              let dtParts = datePartStr.split('/');
-              let timeParts = timePartStr.split(':');
-              
-              let orderDateObj = new Date();
-              if (dtParts.length >= 3 && timeParts.length >= 2) {
-                 orderDateObj = new Date(dtParts[2], dtParts[1]-1, dtParts[0], timeParts[0], timeParts[1]);
-              }
-              
-              // ถ้ายอดเกิดหลังเที่ยงคืนวันนี้ ให้นับเข้ากราฟวงกลมและแท่งขายดี
-              if (orderDateObj >= todayMidnight) { 
-                 
-                 let bNameStr = ord.branch || "อื่นๆ";
-                 branchSum[bNameStr] = (branchSum[bNameStr] || 0) + 1;
-                 
-                 let iStr = ord.items || "";
-                 iStr.split('\n').forEach(function(lineStr) {
-                    
-                    // 🛡️ ระบบสกัดคำสุดฉลาด (V17 Smart Regex) ไม่กลัววงเล็บซ้อนหรือเว้นวรรคผิด
-                    let itemMatch = lineStr.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
-                    if (itemMatch) {
-                       let nameOnlyStr = itemMatch[1].trim();
-                       let stockStr = itemMatch[2];
-                       let qtyStr = itemMatch[3];
-                       
-                       let qtyVal = parseFloat(qtyStr.match(/[\d.]+/)?.[0] || 0);
-                       productSum[nameOnlyStr] = (productSum[nameOnlyStr] || 0) + qtyVal;
-                       
-                       let stockNumReg = stockStr.match(/[\d.]+/);
-                       if (stockNumReg) {
-                          let numVal = parseFloat(stockNumReg[0]);
-                          let branchKeyStr = "[" + bNameStr + "] " + nameOnlyStr;
-                          if(stockSum[branchKeyStr] === undefined) {
-                             stockSum[branchKeyStr] = numVal;
-                          }
-                       }
-                    }
-                 });
-              }
-           });
-           
-           let topSorted = Object.entries(productSum).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
-           let stockSorted = Object.entries(stockSum).sort(function(a, b) { return a[1] - b[1]; });
-           
-           let finalBLabels = Object.keys(branchSum);
-           let finalBVals = [];
-           finalBLabels.forEach(function(k) { finalBVals.push(branchSum[k]); });
-           
-           finalChartData = {
-             pL: topSorted.map(function(i) { return i[0]; }),
-             pV: topSorted.map(function(i) { return i[1]; }),
-             bL: finalBLabels,
-             bV: finalBVals,
-             sStacked: d.analytics.charts.sStacked // 👈 สั่งให้มันหยิบข้อมูลกราฟแยกสี (Nitro Stacked) จากหลังบ้านมาใช้งานด้วย!
-           };
+        // 🚀 ดึงรายชื่อสาขาทั้งหมดมาสร้าง Dropdown อัตโนมัติ
+        const branchFilter = document.getElementById('branchFilter');
+        if (branchFilter) {
+          const currentSelected = branchFilter.value;
+          let bSet = new Set();
+          rawAnalyticsHistory.forEach(o => { if(o.branch) bSet.add(o.branch); });
+          if (rawAnalyticsCharts && rawAnalyticsCharts.bL) rawAnalyticsCharts.bL.forEach(b => bSet.add(b));
+          
+          let opts = '<option value="">ทุกสาขา</option>';
+          Array.from(bSet).sort().forEach(b => {
+            opts += `<option value="${b}" ${b === currentSelected ? 'selected' : ''}>${b}</option>`;
+          });
+          branchFilter.innerHTML = opts;
         }
-        
-        lastAnalyticsData = finalChartData;
-        renderCharts(finalChartData); 
-        // ==========================================
+
+        // 🚀 เรียกใช้ตัวกรองหน้าบ้าน (อัปเดตตารางและกราฟทันที)
+        applyClientFilter(d.menu);
 
         renderMenuAccordion(d.menu); 
         
@@ -620,6 +559,84 @@ function loadDashboardData(smooth, token, searchQ) {
       
     });
 }
+
+// 🚀 ฟังก์ชันประมวลผลตัวกรองสาขาฝั่งหน้าบ้าน (Zero Latency)
+window.applyClientFilter = function(menuData = menuObj) {
+  const bFilter = document.getElementById('branchFilter') ? document.getElementById('branchFilter').value : "";
+  
+  if (bFilter) {
+    allOrders = rawAnalyticsHistory.filter(o => o.branch === bFilter);
+  } else {
+    allOrders = [...rawAnalyticsHistory];
+  }
+  
+  pgNum = 1;
+  renderTable();
+  
+  let branchSum = {}, productSum = {}, catSum = {}, productToCat = {};
+  if (menuData && menuData.categories) {
+    menuData.categories.forEach(c => {
+      if (menuData.grouped[c]) menuData.grouped[c].forEach(p => productToCat[p.name] = c);
+    });
+  }
+  
+  const sDateValue = document.getElementById('sDate').value;
+  const eDateValue = document.getElementById('eDate').value;
+  const isTodayOnly = (!sDateValue && !eDateValue && currentDeepSearchQuery === "");
+  let todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+
+  allOrders.forEach(ord => {
+    let dtStr = (ord.date || "").toString().trim();
+    let dtParts = (dtStr.split(' ')[0] || "").split('/');
+    let timeParts = (dtStr.split(' ')[1] || "00:00").split(':');
+    let orderDateObj = new Date();
+    if (dtParts.length >= 3 && timeParts.length >= 2) {
+      orderDateObj = new Date(dtParts[2], dtParts[1]-1, dtParts[0], timeParts[0], timeParts[1]);
+    }
+    
+    if (!isTodayOnly || orderDateObj >= todayMidnight) {
+      let bNameStr = ord.branch || "อื่นๆ";
+      branchSum[bNameStr] = (branchSum[bNameStr] || 0) + 1;
+      
+      (ord.items || "").split('\n').forEach(lineStr => {
+        let itemMatch = lineStr.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
+        if (itemMatch) {
+          let nameOnlyStr = itemMatch[1].trim();
+          let qtyVal = parseFloat(itemMatch[3].match(/[\d.]+/)?.[0] || 0);
+          productSum[nameOnlyStr] = (productSum[nameOnlyStr] || 0) + qtyVal;
+          let catName = productToCat[nameOnlyStr] || "อื่นๆ";
+          catSum[catName] = (catSum[catName] || 0) + qtyVal;
+        }
+      });
+    }
+  });
+  
+  let topSorted = Object.entries(productSum).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  
+  let newStacked = { labels: [], datasets: [] };
+  if (rawAnalyticsCharts && rawAnalyticsCharts.sStacked) {
+    if (bFilter) {
+      const bIndex = rawAnalyticsCharts.sStacked.labels.indexOf(bFilter);
+      if (bIndex > -1) {
+        newStacked.labels = [bFilter];
+        newStacked.datasets = rawAnalyticsCharts.sStacked.datasets.map(ds => ({ ...ds, data: [ds.data[bIndex]] }));
+      }
+    } else {
+      newStacked = rawAnalyticsCharts.sStacked;
+    }
+  }
+  
+  let finalChartData = {
+    pL: topSorted.map(i => i[0]), pV: topSorted.map(i => i[1]),
+    bL: Object.keys(branchSum), bV: Object.keys(branchSum).map(k => branchSum[k]),
+    cL: Object.keys(catSum), cV: Object.keys(catSum).map(k => catSum[k]),
+    sStacked: newStacked
+  };
+  
+  lastAnalyticsData = finalChartData;
+  renderCharts(finalChartData);
+};
 
 function executeDeepSearch() {
   
@@ -1153,6 +1170,82 @@ function viewOrderDetail(orderId) {
   modal.style.display = 'flex';
 }
 
+// 📊 🚀 ระบบดาวน์โหลด CSV (Export Data) ความเร็วสูง
+function downloadCSV() {
+  if (!allOrders || allOrders.length === 0) return showAlert("ไม่มีข้อมูลออเดอร์ในระบบ");
+
+  const btn = document.getElementById('csvBtn');
+  let originalText = '<i class="fas fa-file-csv"></i> ดาวน์โหลด CSV';
+  if (btn) {
+    originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> เตรียมไฟล์...';
+    btn.disabled = true;
+  }
+
+  try {
+    // BOM (Byte Order Mark) เพื่อให้ Excel อ่านภาษาไทยได้ 100%
+    let csvContent = "\uFEFF";
+    
+    // สร้าง Header
+    csvContent += "วันที่,เวลา,เลขบิล,สาขา,หมวดหมู่,ชื่อสินค้า,จำนวน (ชิ้น),ชื่อลูกค้า,เบอร์โทรศัพท์,สถานะ\n";
+
+    // สร้าง Map หมวดหมู่จากเมนู
+    let productToCat = {};
+    if (menuObj && menuObj.categories) {
+      menuObj.categories.forEach(c => {
+        if (menuObj.grouped[c]) {
+          menuObj.grouped[c].forEach(p => productToCat[p.name] = c);
+        }
+      });
+    }
+
+    // วนลูปแยกข้อมูลเป็นบรรทัดตามสินค้า
+    allOrders.forEach(o => {
+      const dtParts = (o.date || "").split(' ');
+      const dStr = dtParts[0] || "";
+      const tStr = dtParts[1] || "";
+      
+      const itemsArr = (o.items || "").split('\n');
+      itemsArr.forEach(line => {
+        if (line.trim() === "") return;
+        const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
+        if (match) {
+          const pName = match[1].trim();
+          const qty = parseFloat(match[3].match(/[\d.]+/)?.[0] || 0);
+          const cat = productToCat[pName] || "อื่นๆ";
+          
+          // หุ้มด้วย Double Quotes และใช้สูตร Excel สำหรับเบอร์โทร
+          const row = [
+            `"${dStr}"`, `"${tStr}"`, `"${o.id}"`, `"${o.branch || ''}"`,
+            `"${cat}"`, `"${pName.replace(/"/g, '""')}"`, `"${qty}"`,
+            `"${(o.customer || '').replace(/"/g, '""')}"`, `="${o.phone || ''}"`, `"${o.status}"`
+          ];
+          csvContent += row.join(",") + "\n";
+        }
+      });
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Export_Orders_${new Date().getTime()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 150);
+
+    showToast("✅ ดาวน์โหลดไฟล์ CSV สำเร็จ!");
+  } catch (error) {
+    console.error(error);
+    showAlert("❌ เกิดข้อผิดพลาด: " + error.message);
+  } finally {
+    if (btn) {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+
 // 📄 1. แก้ไขปุ่มเขียว (downloadPDF) - ให้ปลดล็อกปุ่มและจัดหน้าตาตามไฟล์ตัวอย่าง
 function downloadPDF() {
   const targetOrder = allOrders.find(function(order) { 
@@ -1205,10 +1298,13 @@ function renderCharts(analyticsData) {
   
   if(bcObj !== null) { bcObj.destroy(); }
   if(pcObj !== null) { pcObj.destroy(); }
+  if(ccObj !== null) { ccObj.destroy(); }
   if(scObj !== null) { scObj.destroy(); }
   
   const ctxBar = document.getElementById('bC').getContext('2d');
   const ctxPie = document.getElementById('pC_Chart').getContext('2d');
+  const catEl = document.getElementById('cC_Chart');
+  const ctxCat = catEl ? catEl.getContext('2d') : null;
   const ctxStock = document.getElementById('sC').getContext('2d');
 
   // 🛡️ Safety Guard: บังคับตัดข้อมูลเหลือแค่ 10 อันดับแรกเสมอ กันกราฟระเบิด
@@ -1248,6 +1344,31 @@ function renderCharts(analyticsData) {
     } 
   });
   
+  // วาดกราฟวงกลมหมวดหมู่
+  if (ctxCat && analyticsData.cL && analyticsData.cL.length > 0) {
+    ccObj = new Chart(ctxCat, { 
+      type: 'doughnut', 
+      data: { 
+        labels: analyticsData.cL, 
+        datasets: [{ data: analyticsData.cV, backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#34495e', '#e67e22', '#2ecc71'], hoverOffset: 15, borderWidth: 4, borderColor: '#FFFFFF' }] 
+      }, 
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false, 
+        cutout: '82%', 
+        plugins: { 
+          legend: { 
+            position: 'bottom', 
+            labels: { 
+              boxWidth: 12,
+              font: { family: 'Sarabun', size: 10 } 
+            } 
+          } 
+        } 
+      } 
+    });
+  }
+
   // 🚀 เวทมนตร์ลบขีด: เปลี่ยนค่า 0 ให้เป็นความว่างเปล่า (กราฟจะได้ไม่วาดเส้นกวนใจ)
   if (analyticsData.sStacked && analyticsData.sStacked.datasets) {
     analyticsData.sStacked.datasets.forEach(function(ds) {
