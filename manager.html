@@ -17,7 +17,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <link rel="stylesheet" href="style.css?v=nitro18">
+  <link rel="stylesheet" href="style.css?v=nitro19">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -140,10 +140,18 @@
       /* ปุ่ม Action */
       #oT td:nth-child(7), #coT td:nth-child(7) { justify-content: flex-end; gap: 10px; padding-top: 5px !important; border-top: 1px dashed #eee !important; }
 
-      /* 🛠️ Fix Menu Items (แก้รายการสินค้าตกขอบ) */
-      .cat-item { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
-      .cat-item > div:first-child { width: 100%; border-bottom: 1px solid #f5f5f5; padding-bottom: 8px; }
-      .cat-item > div:last-child { width: 100%; justify-content: space-between; background: #fcfcfc; padding: 8px; border-radius: 8px; }
+      /* 🛠️ Fix Menu Items (เลื่อนซ้ายขวาได้เฉพาะกล่องสินค้าในมือถือ) */
+      #menuItems {
+        padding: 10px 15px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      #menuItems::-webkit-scrollbar { height: 4px; }
+      #menuItems::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      
+      .cat-item { flex-direction: row !important; align-items: center !important; min-width: max-content !important; padding: 12px 10px !important; gap: 20px !important; }
+      .cat-item > div:first-child { width: auto !important; border-bottom: none !important; padding-bottom: 0 !important; }
+      .cat-item > div:last-child { width: auto !important; background: transparent !important; padding: 0 !important; justify-content: flex-end !important; }
       
       /* ซ่อนข้อความยาวๆ ตรงที่เปลี่ยนหน้า */
       .pagination-footer { flex-wrap: wrap; justify-content: center !important; gap: 10px !important; }
@@ -776,6 +784,6 @@
   </div>
 </div>
 
-<script src="script.js?v=nitro18"></script>
+<script src="script.js?v=nitro19"></script>
 </body>
 </html>
