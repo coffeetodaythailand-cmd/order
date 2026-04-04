@@ -17,7 +17,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <link rel="stylesheet" href="style.css?v=nitro17">
+  <link rel="stylesheet" href="style.css?v=nitro18">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -148,6 +148,22 @@
       /* ซ่อนข้อความยาวๆ ตรงที่เปลี่ยนหน้า */
       .pagination-footer { flex-wrap: wrap; justify-content: center !important; gap: 10px !important; }
       .pagination-footer div:first-child { display: none; }
+      
+      /* 🛠️ Fix Menu Tools Scroll on Mobile */
+      .menu-tools-container {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      .menu-tools-container::-webkit-scrollbar {
+        height: 4px;
+      }
+      .menu-tools-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
     }
     /* ซ่อน Mobile Elements ในจอคอม */
     .mobile-nav, .sidebar-overlay { display: none; }
@@ -416,15 +432,15 @@
             <button 
               id="deepSearchBtn" 
               class="btn" 
-              style="background-color:var(--dark); color:white; padding:8px 15px; font-size:11px; border-radius:12px; white-space:nowrap; border:none; cursor:pointer;" 
+              style="background-color:var(--dark); color:white; padding:6px 12px; font-size:11px; border-radius:10px; white-space:nowrap; border:none; cursor:pointer;" 
               onclick="executeDeepSearch()"
             >
-              <i class="fas fa-magnifying-glass-plus"></i> ค้นหาลึก
+              <i class="fas fa-database"></i> ค้นหา
             </button>
             <button 
               id="clearSearchBtn" 
               class="btn" 
-              style="display:none; background-color:#EEEEEE; color:#333333; padding:8px 15px; font-size:11px; border-radius:12px; white-space:nowrap; border:none; cursor:pointer;" 
+              style="display:none; background-color:#EEEEEE; color:#333333; padding:6px 12px; font-size:11px; border-radius:10px; white-space:nowrap; border:none; cursor:pointer;" 
               onclick="clearDeepSearch()"
             >
               <i class="fas fa-rotate-left"></i> ล้าง
@@ -552,7 +568,7 @@
 
         <div class="section-header" style="margin-top: 20px; margin-bottom: 20px;">
           <h2 class="section-title" style="font-size: 20px;"><i class="fas fa-sliders"></i> เครื่องมือจัดการ</h2>
-          <div style="display:flex; gap:12px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
+          <div class="menu-tools-container" style="display:flex; gap:12px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
         <button id="saveOrderBtn" class="btn btn-orange btn-sm" onclick="saveMenuOrder()">
               <i class="fas fa-save"></i> บันทึกลำดับ
             </button>
@@ -760,6 +776,6 @@
   </div>
 </div>
 
-<script src="script.js?v=nitro17"></script>
+<script src="script.js?v=nitro18"></script>
 </body>
 </html>

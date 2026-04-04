@@ -528,7 +528,7 @@ function loadDashboardData(smooth, token, searchQ) {
         }
 
         if(btnDeepSearch) {
-          btnDeepSearch.innerHTML = '<i class="fas fa-database"></i> ค้นหาลึกจากฐานข้อมูล';
+          btnDeepSearch.innerHTML = '<i class="fas fa-database"></i> ค้นหา';
           btnDeepSearch.disabled = false;
         }
         
@@ -650,7 +650,7 @@ function executeDeepSearch() {
   document.getElementById('eDate').value = "";
   
   const btn = document.getElementById('deepSearchBtn');
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังเจาะข้อมูล...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ค้นหา...';
   btn.disabled = true;
   
   loadDashboardData(true, null, queryValue);
