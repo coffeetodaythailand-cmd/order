@@ -17,7 +17,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <link rel="stylesheet" href="style.css?v=nitro8">
+  <link rel="stylesheet" href="style.css?v=nitro9">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -88,8 +88,10 @@
       .filter-toolbar > button { flex: 1 1 100% !important; height: 40px !important; font-size: 14px !important; margin: 4px 0 !important; }
       .filter-toolbar > div:nth-of-type(6) { flex: 1 1 100% !important; flex-wrap: wrap !important; justify-content: center !important; gap: 6px !important; }
       .filter-toolbar > div:nth-of-type(6) > button { flex: 1 1 calc(33.33% - 6px) !important; text-align: center; } /* ปุ่มวันที่ด่วน */
-      .filter-toolbar > div:nth-of-type(7) { flex: 1 1 100% !important; margin-left: 0 !important; }
-      .filter-toolbar > div:nth-of-type(7) > button { flex: 1; height: 40px !important; font-size: 14px !important; }
+      
+      .desktop-toolbar-wrapper { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+      .download-btn-group { flex: 1 1 100% !important; margin-left: 0 !important; flex-wrap: wrap !important; justify-content: center !important; }
+      .download-btn-group > button { flex: 1; height: 40px !important; font-size: 14px !important; min-width: 120px; }
 
       /* ตารางย่อขนาดตัวอักษร */
       th, td { padding: 8px 4px !important; font-size: 11px !important; }
@@ -268,9 +270,11 @@
                 <i class="fas fa-filter" style="color: var(--blue);"></i> ตัวกรองข้อมูล: เลือกระยะเวลาและสาขา เพื่อดูสถิติบน Dashboard หรือดาวน์โหลดรายงาน
               </div>
 
-              <!-- แถวปุ่มเครื่องมือ (บีบอัดขนาดให้อยู่บรรทัดเดียว) -->
-              <div class="filter-toolbar" style="display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 6px; width: 100%; padding-bottom: 2px; scrollbar-width: none;">
-                <style>.filter-toolbar::-webkit-scrollbar { display: none; }</style>
+              <!-- แถวปุ่มเครื่องมือแบบ Absolute Layout กันตกลงบรรทัดล่าง 100% -->
+              <div class="desktop-toolbar-wrapper" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;">
+                
+                <div class="filter-toolbar" style="display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 6px; flex: 1; padding-bottom: 2px; scrollbar-width: none;">
+                  <style>.filter-toolbar::-webkit-scrollbar { display: none; }</style>
                 
                 <!-- 1. สาขา -->
                 <div class="date-input-wrapper" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex-shrink: 0;">
@@ -305,11 +309,15 @@
                   <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(30, this)">30 วัน</button>
                 </div>
 
-                <!-- 5. ดาวน์โหลด (ใช้ margin-left: auto ดันไปขวาสุด) -->
-                <div style="display: flex; gap: 6px; align-items: center; margin-left: auto; flex-shrink: 0;">
+                </div>
+
+                <!-- 5. ดาวน์โหลด (แยกออกมาอยู่ขวาสุด ไม่ให้เกี่ยวกับ scroll) -->
+                <div class="download-btn-group" style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
                   <button id="csvBtn" class="btn btn-sm" onclick="downloadCSV()" style="background-color: #10b981; color: white; justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; white-space: nowrap;"><i class="fas fa-file-csv"></i> โหลด CSV</button>
                   <button id="summaryBtn" class="btn btn-blue btn-sm" onclick="downloadSummaryReport()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; white-space: nowrap;"><i class="fas fa-file-pdf"></i> โหลด PDF</button>
                 </div>
+
+              </div>
 
               </div>
             </div>
@@ -747,6 +755,6 @@
   </div>
 </div>
 
-<script src="script.js?v=nitro8"></script>
+<script src="script.js?v=nitro9"></script>
 </body>
 </html>
