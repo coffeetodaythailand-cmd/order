@@ -55,10 +55,42 @@
 
       /* 5. ปรับแต่ง Components ย่อยให้แน่นขึ้น */
       .filter-panel { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
-      .date-input-wrapper { flex: 1; }
       .card { padding: 15px !important; }
       .section-title { font-size: 18px !important; }
       
+      /* 🔥 Fix Mobile Filter Toolbar (Premium Stacked Layout) */
+      .filter-toolbar {
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+        gap: 10px !important;
+      }
+      .filter-toolbar > .date-input-wrapper {
+        flex: 1 1 45% !important; /* วันที่ซ้ายขวาคู่กัน */
+        padding: 8px 12px !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 10px !important;
+        justify-content: flex-start !important;
+      }
+      .filter-toolbar > .date-input-wrapper:nth-of-type(1) {
+        flex: 1 1 100% !important; /* กล่องสาขาให้เต็มบรรทัด */
+      }
+      .filter-toolbar > .date-input-wrapper input,
+      .filter-toolbar > .date-input-wrapper select {
+        flex: 1;
+        width: 100% !important;
+        margin-left: 8px;
+        text-align: right;
+        font-size: 14px !important;
+      }
+      .filter-toolbar > div[style*="width: 1px"], .filter-toolbar > span {
+        display: none !important; /* ซ่อนเส้นคั่นแนวนอนทิ้งบนมือถือ */
+      }
+      .filter-toolbar > button { flex: 1 1 100% !important; height: 40px !important; font-size: 14px !important; margin: 4px 0 !important; }
+      .filter-toolbar > div:nth-of-type(6) { flex: 1 1 100% !important; flex-wrap: wrap !important; justify-content: center !important; gap: 6px !important; }
+      .filter-toolbar > div:nth-of-type(6) > button { flex: 1 1 calc(33.33% - 6px) !important; text-align: center; } /* ปุ่มวันที่ด่วน */
+      .filter-toolbar > div:nth-of-type(7) { flex: 1 1 100% !important; margin-left: 0 !important; }
+      .filter-toolbar > div:nth-of-type(7) > button { flex: 1; height: 40px !important; font-size: 14px !important; }
+
       /* ตารางย่อขนาดตัวอักษร */
       th, td { padding: 8px 4px !important; font-size: 11px !important; }
       
@@ -237,45 +269,46 @@
               </div>
 
               <!-- แถวปุ่มเครื่องมือ (บีบอัดขนาดให้อยู่บรรทัดเดียว) -->
-              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%;">
+              <div class="filter-toolbar" style="display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 6px; width: 100%; padding-bottom: 2px; scrollbar-width: none;">
+                <style>.filter-toolbar::-webkit-scrollbar { display: none; }</style>
                 
                 <!-- 1. สาขา -->
-                <div class="date-input-wrapper" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px;">
+                <div class="date-input-wrapper" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex-shrink: 0;">
                   <i class="fas fa-store" style="color: var(--primary);"></i>
                   <select id="branchFilter" class="filter-input" style="width: 85px; font-weight: 600; cursor: pointer;" onchange="applyClientFilter()"><option value="">ทุกสาขา</option></select>
                 </div>
                 
-                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px;"></div>
+                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px; flex-shrink: 0;"></div>
                 
                 <!-- 2. วันที่ -->
-                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px;">
+                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex-shrink: 0;">
                   <i class="fas fa-calendar-alt"></i>
                   <input type="date" id="sDate" class="filter-input" style="width: 105px;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
                 </div>
-                <span style="color: #9ca3af; font-weight: bold; margin: 0 -2px;">-</span>
-                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px;">
+                <span style="color: #9ca3af; font-weight: bold; margin: 0 -2px; flex-shrink: 0;">-</span>
+                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex-shrink: 0;">
                   <i class="fas fa-calendar-alt"></i>
                   <input type="date" id="eDate" class="filter-input" style="width: 105px;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
                 </div>
 
                 <!-- 3. ปุ่มกรอง -->
-                <button class="btn btn-red btn-sm" onclick="applyDateFilter()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px;"><i class="fas fa-filter"></i> กรอง</button>
+                <button class="btn btn-red btn-sm" onclick="applyDateFilter()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; flex-shrink: 0;"><i class="fas fa-filter"></i> กรอง</button>
                 
-                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px;"></div>
+                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px; flex-shrink: 0;"></div>
                 
                 <!-- 4. Quick Filters -->
-                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-                  <button class="quick-filter-btn" style="padding: 6px 10px;" onclick="setQuickDateFilter(0, this)">วันนี้</button>
-                  <button class="quick-filter-btn" style="padding: 6px 10px;" onclick="setQuickDateFilter(3, this)">3 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 6px 10px;" onclick="setQuickDateFilter(7, this)">7 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 6px 10px;" onclick="setQuickDateFilter(15, this)">15 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 6px 10px;" onclick="setQuickDateFilter(30, this)">30 วัน</button>
+                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: nowrap; flex-shrink: 0;">
+                  <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(0, this)">วันนี้</button>
+                  <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(3, this)">3 วัน</button>
+                  <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(7, this)">7 วัน</button>
+                  <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(15, this)">15 วัน</button>
+                  <button class="quick-filter-btn" style="padding: 6px 10px; white-space: nowrap;" onclick="setQuickDateFilter(30, this)">30 วัน</button>
                 </div>
 
                 <!-- 5. ดาวน์โหลด (ใช้ margin-left: auto ดันไปขวาสุด) -->
-                <div style="display: flex; gap: 6px; align-items: center; margin-left: auto;">
-                  <button id="csvBtn" class="btn btn-sm" onclick="downloadCSV()" style="background-color: #10b981; color: white; justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s;"><i class="fas fa-file-csv"></i> โหลด CSV</button>
-                  <button id="summaryBtn" class="btn btn-blue btn-sm" onclick="downloadSummaryReport()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px;"><i class="fas fa-file-pdf"></i> โหลด PDF</button>
+                <div style="display: flex; gap: 6px; align-items: center; margin-left: auto; flex-shrink: 0;">
+                  <button id="csvBtn" class="btn btn-sm" onclick="downloadCSV()" style="background-color: #10b981; color: white; justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; white-space: nowrap;"><i class="fas fa-file-csv"></i> โหลด CSV</button>
+                  <button id="summaryBtn" class="btn btn-blue btn-sm" onclick="downloadSummaryReport()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; white-space: nowrap;"><i class="fas fa-file-pdf"></i> โหลด PDF</button>
                 </div>
 
               </div>
