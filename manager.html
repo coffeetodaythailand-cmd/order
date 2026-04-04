@@ -17,7 +17,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <link rel="stylesheet" href="style.css?v=nitro12">
+  <link rel="stylesheet" href="style.css?v=nitro13">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -273,39 +273,39 @@
               <!-- แถวปุ่มเครื่องมือแบบ Absolute Layout กันตกลงบรรทัดล่าง 100% -->
               <div class="desktop-toolbar-wrapper" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;">
                 
-                <div class="filter-toolbar" style="display: flex; flex-wrap: nowrap; overflow: hidden; align-items: center; gap: 3px; flex: 1; min-width: 0; padding-bottom: 0;">
+                <div class="filter-toolbar" style="display: flex; flex-wrap: nowrap; overflow: hidden; align-items: center; gap: 6px; flex: 1; min-width: 0; padding-bottom: 0;">
                 
                 <!-- 1. สาขา -->
-                <div class="date-input-wrapper" style="cursor: pointer; background: white; margin: 0; padding: 2px 6px; flex-shrink: 1; min-width: 0;">
+                <div class="date-input-wrapper" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex: 1 1 auto; min-width: 80px; max-width: 130px;">
                   <i class="fas fa-store" style="color: var(--primary);"></i>
-                  <select id="branchFilter" class="filter-input" style="width: 65px; font-size: 11px; font-weight: 600; cursor: pointer; padding: 0;" onchange="applyClientFilter()"><option value="">ทุกสาขา</option></select>
+                  <select id="branchFilter" class="filter-input" style="width: 100%; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0;" onchange="applyClientFilter()"><option value="">ทุกสาขา</option></select>
                 </div>
                 
-                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 1px; flex-shrink: 0;"></div>
+                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px; flex-shrink: 0;"></div>
                 
                 <!-- 2. วันที่ -->
-                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 2px 6px; flex-shrink: 1; min-width: 0;">
+                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex: 1 1 auto; min-width: 95px; max-width: 140px;">
                   <i class="fas fa-calendar-alt"></i>
-                  <input type="date" id="sDate" class="filter-input" style="width: 85px; font-size: 11px; padding: 0;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
+                  <input type="date" id="sDate" class="filter-input" style="width: 100%; font-size: 12px; padding: 0;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
                 </div>
-                <span style="color: #9ca3af; font-weight: bold; margin: 0 -1px; flex-shrink: 0;">-</span>
-                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 2px 6px; flex-shrink: 1; min-width: 0;">
+                <span style="color: #9ca3af; font-weight: bold; margin: 0; flex-shrink: 0;">-</span>
+                <div class="date-input-wrapper" onclick="try{this.querySelector('input').showPicker()}catch(e){}" style="cursor: pointer; background: white; margin: 0; padding: 4px 8px; flex: 1 1 auto; min-width: 95px; max-width: 140px;">
                   <i class="fas fa-calendar-alt"></i>
-                  <input type="date" id="eDate" class="filter-input" style="width: 85px; font-size: 11px; padding: 0;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
+                  <input type="date" id="eDate" class="filter-input" style="width: 100%; font-size: 12px; padding: 0;" onchange="clearQuickFilterActive()" onclick="try{this.showPicker()}catch(e){}">
                 </div>
 
                 <!-- 3. ปุ่มกรอง -->
-                <button class="btn btn-red btn-sm" onclick="applyDateFilter()" style="justify-content: center; padding: 0 6px; height: 28px; border-radius: 6px; font-size: 11px; flex-shrink: 0;"><i class="fas fa-filter"></i> กรอง</button>
+                <button class="btn btn-red btn-sm" onclick="applyDateFilter()" style="justify-content: center; padding: 0 10px; height: 32px; border-radius: 8px; font-size: 12px; flex-shrink: 0;"><i class="fas fa-filter"></i> กรอง</button>
                 
-                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 1px; flex-shrink: 0;"></div>
+                <div style="width: 1px; height: 18px; background: #d1d5db; margin: 0 2px; flex-shrink: 0;"></div>
                 
                 <!-- 4. Quick Filters -->
-                <div style="display: flex; gap: 2px; align-items: center; flex-wrap: nowrap; flex-shrink: 1; min-width: 0;">
-                  <button class="quick-filter-btn" style="padding: 2px 5px; font-size: 10px; white-space: nowrap;" onclick="setQuickDateFilter(0, this)">วันนี้</button>
-                  <button class="quick-filter-btn" style="padding: 2px 5px; font-size: 10px; white-space: nowrap;" onclick="setQuickDateFilter(3, this)">3 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 2px 5px; font-size: 10px; white-space: nowrap;" onclick="setQuickDateFilter(7, this)">7 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 2px 5px; font-size: 10px; white-space: nowrap;" onclick="setQuickDateFilter(15, this)">15 วัน</button>
-                  <button class="quick-filter-btn" style="padding: 2px 5px; font-size: 10px; white-space: nowrap;" onclick="setQuickDateFilter(30, this)">30 วัน</button>
+                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0;">
+                  <button class="quick-filter-btn" style="flex: 1; min-width: 45px; padding: 6px 2px; font-size: 11px; white-space: nowrap;" onclick="setQuickDateFilter(0, this)">วันนี้</button>
+                  <button class="quick-filter-btn" style="flex: 1; min-width: 45px; padding: 6px 2px; font-size: 11px; white-space: nowrap;" onclick="setQuickDateFilter(3, this)">3 วัน</button>
+                  <button class="quick-filter-btn" style="flex: 1; min-width: 45px; padding: 6px 2px; font-size: 11px; white-space: nowrap;" onclick="setQuickDateFilter(7, this)">7 วัน</button>
+                  <button class="quick-filter-btn" style="flex: 1; min-width: 45px; padding: 6px 2px; font-size: 11px; white-space: nowrap;" onclick="setQuickDateFilter(15, this)">15 วัน</button>
+                  <button class="quick-filter-btn" style="flex: 1; min-width: 45px; padding: 6px 2px; font-size: 11px; white-space: nowrap;" onclick="setQuickDateFilter(30, this)">30 วัน</button>
                 </div>
 
                 </div>
@@ -754,6 +754,6 @@
   </div>
 </div>
 
-<script src="script.js?v=nitro12"></script>
+<script src="script.js?v=nitro13"></script>
 </body>
 </html>
