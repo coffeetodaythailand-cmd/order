@@ -1007,7 +1007,27 @@ function loadClosedOrdersData() {
 
 function renderClosedOrdersTable() {
   // 🚀 NEW: ใช้ allClosedOrders ที่โหลดมาแล้ว
-  let filteredOrders = allClosedOrders;
+  const searchInput = document.getElementById('closedOrderSearch');
+  const queryLower = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+  let filteredOrders = allClosedOrders.filter(function(order) {
+    if (queryLower === "") return true;
+    
+    const fullId = order.id.toLowerCase();
+    const numOnlyId = order.id.replace(/\D/g, ''); 
+    const shortId = parseInt(numOnlyId).toString(); 
+    
+    const customerName = order.customer ? order.customer.toLowerCase() : "";
+    const branchName = order.branch ? order.branch.toLowerCase() : "";
+    const phoneNum = order.phone ? order.phone.toString() : "";
+    
+    return (fullId.indexOf(queryLower) !== -1) || 
+           (numOnlyId.indexOf(queryLower) !== -1) || 
+           (shortId === queryLower) || 
+           (customerName.indexOf(queryLower) !== -1) || 
+           (phoneNum.indexOf(queryLower) !== -1) || 
+           (branchName.indexOf(queryLower) !== -1);
+  });
 
   currentFilteredClosedOrdersCount = filteredOrders.length;
   const offset = (coPgNum - 1) * coPgLim;

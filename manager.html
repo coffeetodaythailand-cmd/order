@@ -17,7 +17,7 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <link rel="stylesheet" href="style.css?v=nitro19">
+  <link rel="stylesheet" href="style.css?v=nitro21">
   <style>
     /* 📱 Mobile Portrait Patch by Gemini Nitro */
     @media (max-width: 768px) {
@@ -172,6 +172,20 @@
         background: #cbd5e1;
         border-radius: 10px;
       }
+      
+      /* 🛠️ Fix Mobile Search Box (ป้องกันปุ่มค้นหาตกขอบ/หายในมือถือ) */
+      .search-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        padding: 12px 15px !important;
+        gap: 10px !important;
+      }
+      .search-row > div:first-child { flex: 1 1 100% !important; border-bottom: 1px solid #f0f0f0 !important; padding-bottom: 8px !important; }
+      .search-row > div:last-child { flex: 1 1 100% !important; justify-content: flex-end !important; }
+      .search-row > div:last-child > button { flex: 1 !important; height: 38px !important; font-size: 13px !important; justify-content: center !important; }
     }
     /* ซ่อน Mobile Elements ในจอคอม */
     .mobile-nav, .sidebar-overlay { display: none; }
@@ -525,6 +539,24 @@
               oninput="handleClosedOrderSearch()"
             >
           </div>
+          <div style="display:flex; gap:10px;">
+            <button 
+              id="closedDeepSearchBtn" 
+              class="btn" 
+              style="background-color:var(--dark); color:white; padding:6px 12px; font-size:11px; border-radius:10px; white-space:nowrap; border:none; cursor:pointer;" 
+              onclick="executeClosedDeepSearch()"
+            >
+              <i class="fas fa-database"></i> ค้นหา
+            </button>
+            <button 
+              id="clearClosedSearchBtn" 
+              class="btn" 
+              style="display:none; background-color:#EEEEEE; color:#333333; padding:6px 12px; font-size:11px; border-radius:10px; white-space:nowrap; border:none; cursor:pointer;" 
+              onclick="clearClosedDeepSearch()"
+            >
+              <i class="fas fa-rotate-left"></i> ล้าง
+            </button>
+          </div>
         </div>
 
         <div class="card" id="closedTableCard">
@@ -784,6 +816,6 @@
   </div>
 </div>
 
-<script src="script.js?v=nitro19"></script>
+<script src="script.js?v=nitro21"></script>
 </body>
 </html>
