@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    /*
+     * CoffeeToday System - Stock & Packing Station UI
+     * โดย คุณเบลล์ (Khun Bell)
+     * การจัดวางโครงสร้าง CSS แบบเต็มพิกัด 
+     */
+     
+    :root { 
+      --primary: #A91D3A; 
+      --dark: #2D3133; 
+      --bg: #F3F4F6; 
+      --card-bg: #FFFFFF; 
+      --green: #22c55e;
+      --blue: #3498db;
+    }
+    
+    body { 
+      font-family: 'Sarabun', sans-serif; 
+      background: var(--bg); 
+      margin: 0; 
+      padding-bottom: 50px; 
+    }
+    
+    #main-app { 
+      display: block; 
+    }
+
+    .nav { 
+      background: var(--card-bg); 
+      padding: 10px 20px; 
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+    }
+    
+    .brand { 
+      font-family: 'Prompt'; 
+      font-weight: 600; 
+      font-size: 16px; 
+      color: var(--dark); 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    
+    .container { 
+      max-width: 600px; 
+      margin: 15px auto; 
+      padding: 0 15px; 
+    }
+
+    /* ✅ แก้ไข CSS ช่องค้นหาให้มีปุ่ม Deep Search ซ่อนอยู่ */
+    .search-box {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      border: 1px solid #EEE;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+    }
+    
+    .search-input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-family: 'Prompt';
+      font-size: 14px;
+      color: var(--dark);
+    }
+    
+    .btn-search-action {
+      background: var(--dark);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Prompt';
+    }
+    
+    .btn-search-clear {
+      background: #EEE;
+      color: #333;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Prompt';
+      display: none;
+    }
+    
+    .task-card { 
+      background: var(--card-bg); 
+      border-radius: 15px; 
+      padding: 15px; 
+      margin-bottom: 15px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      border-left: 6px solid var(--primary); 
+      transition: all 0.3s; 
+      position: relative; 
+      animation: slideIn 0.4s ease-out;
+    }
+    
+    .task-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      margin-bottom: 10px; 
+      border-bottom: 1px solid #F0F0F0; 
+      padding-bottom: 8px; 
+    }
+    
+    .order-id { 
+      font-family: 'Prompt'; 
+      font-weight: bold; 
+      font-size: 18px; 
+      color: var(--primary); 
+    }
+    
+    .task-time { 
+      font-size: 11px; 
+      color: #666; 
+      background: #F8F9FA; 
+      padding: 4px 8px; 
+      border-radius: 50px; 
+      font-weight: 600;
+      border: 1px solid #EEE;
+    }
+    
+    .badge-container { 
+      display: flex; 
+      gap: 5px; 
+      margin-top: 5px; 
+      flex-wrap: wrap; 
+    }
+    
+    .branch-badge { 
+      background: var(--dark); 
+      color: #FFF; 
+      padding: 3px 10px; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      font-weight: 500; 
+    }
+    
+    .phone-badge { 
+      background: var(--blue); 
+      color: #FFF; 
+      padding: 3px 10px; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      text-decoration: none; 
+    }
+    
+    .item-checklist { 
+      background: #FFF5F7; 
+      padding: 12px; 
+      border-radius: 12px; 
+      border: 1px dashed #FFD1DC; 
+      margin-top: 10px; 
+    }
+    
+    .check-row { 
+      display: flex; 
+      align-items: center; 
+      padding: 8px; 
+      background: #FFF; 
+      border-radius: 10px; 
+      margin-bottom: 6px; 
+      cursor: pointer; 
+      transition: 0.2s; 
+      border: 1px solid transparent; 
+    }
+    
+    .check-row:hover { 
+      border-color: var(--primary); 
+    }
+    
+    .check-row input[type="checkbox"] { 
+      width: 18px; 
+      height: 18px; 
+      margin-right: 12px; 
+      accent-color: var(--primary); 
+    }
+    
+    .check-row span { 
+      font-family: 'Prompt'; 
+      font-size: 14px; 
+      color: #444; 
+    }
+    
+    .check-row.checked { 
+      background: #F9FAFB; 
+      opacity: 0.6; 
+    }
+    
+    .check-row.checked span { 
+      text-decoration: line-through; 
+    }
+    
+    .action-btn { 
+      width: 100%; 
+      margin-top: 15px; 
+      padding: 12px; 
+      border: none; 
+      border-radius: 12px; 
+      background: var(--primary); 
+      color: #FFF; 
+      font-family: 'Prompt'; 
+      font-size: 15px; 
+      font-weight: 600; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 10px; 
+      transition: 0.2s; 
+      cursor: pointer;
+    }
+    
+    .action-btn:disabled { 
+      background: #CCC; 
+      cursor: not-allowed; 
+    }
+    
+    .pagination-footer { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 10px; 
+      margin-top: 20px; 
+      font-size: 13px; 
+      padding: 15px; 
+      background: #FFF; 
+      border-radius: 15px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
+    }
+    
+    .page-btn { 
+      background: #F3F4F6; 
+      border: none; 
+      width: 35px; 
+      height: 35px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: 0.2s; 
+    }
+    
+    .page-btn:hover:not(:disabled) { 
+      background: var(--primary); 
+      color: white; 
+    }
+    
+    .styled-select { 
+      background: #FFF; 
+      border: 1px solid #DDD; 
+      padding: 5px 10px; 
+      border-radius: 8px; 
+      font-family: 'Prompt'; 
+      outline: none; 
+      cursor: pointer; 
+      font-size: 12px; 
+    }
+
+    .empty-state { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: #AAA; 
+    }
+    
+    @keyframes slideIn { 
+      from { opacity: 0; transform: translateY(20px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    @keyframes blink { 
+      50% { opacity: 0.5; } 
+    }
+
+    /* Packing Modal Styles */
+    .packing-modal-content {
+      background: var(--bg);
+      border-radius: 24px;
+      width: 95%;
+      max-width: 550px;
+      height: 90vh;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden; /* Important for child scrolling */
+    }
+
+    .packing-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px 25px;
+      background: #FFF;
+      border-bottom: 1px solid #EEE;
+      flex-shrink: 0;
+    }
+
+    .packing-modal-close {
+      background: #F3F4F6;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      color: #888;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .packing-modal-close:hover {
+      background: #E5E7EB;
+      color: var(--primary);
+      transform: rotate(90deg);
+    }
+
+    .packing-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .overlay {
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0; 
+      top: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0,0,0,0.7); 
+      backdrop-filter: blur(8px); 
+      align-items: center; 
+      justify-content: center; 
+    }
+
+    .modal-card {
+      background: #FFF; 
+      padding: 40px; 
+      border-radius: 30px;
+      width: 90%; 
+      max-width: 400px; 
+      text-align: center;
+      border-top: 10px solid var(--primary); 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    /* แจ้งเตือนสถานะสำเร็จของบิล (UI ใหม่) */
+    .success-badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* Toast Notification (แจ้งเตือนแบบนุ่มนวล) */
+    #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
+    .toast { pointer-events: auto; background: rgba(45, 49, 51, 0.95); color: #fff; padding: 12px 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; font-family: 'Prompt'; font-size: 14px; animation: slideDown 0.3s ease-out; backdrop-filter: blur(5px); border-left: 5px solid var(--primary); }
+    .toast.success { border-left-color: var(--green); }
+    .toast i { font-size: 16px; }
+    @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div id="main-app">
+  
+  <div class="nav">
+    <div class="brand">
+      <i class="fas fa-tasks" style="color:var(--primary);"></i> 
+      ตรวจสอบ & แพ็กออเดอร์
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-size:11px; color:var(--green); font-weight:600; background:#E8F5E9; padding:5px 12px; border-radius:50px; display:flex; align-items:center; gap:6px;">
+        <div style="width:6px; height:6px; background:var(--green); border-radius:50%; animation: blink 1.5s infinite;"></div>
+        Sync (3 นาที)
+      </div>
+      <button onclick="handleLogout()" style="background:none; border:none; color:#AAA; cursor:pointer;"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <div class="container">
+    
+    <div class="search-box">
+      <i class="fas fa-search" style="color:#BBB; font-size:14px;"></i>
+      <input type="text" id="sQuery" class="search-input" placeholder="พิมพ์ชื่อ, เลขบิล หรือเบอร์โทร..." oninput="currentPage=1; renderTasks();">
+      <button id="deepSearchBtn" class="btn-search-action" onclick="executeDeepSearch()">ค้นหาลึก</button>
+      <button id="clearSearchBtn" class="btn-search-clear" onclick="clearDeepSearch()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div id="taskList">
+      <div style="text-align:center; padding:50px; color:#AAA;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:30px;"></i>
+        <p>Loading Data...</p>
+      </div>
+    </div>
+
+    <div class="pagination-footer">
+      <select id="pgLimit" class="styled-select" onchange="changePageLimit()">
+        <option value="5"> 5 แถว</option>
+        <option value="10"> 10 แถว</option>
+        <option value="15"> 15 แถว</option>
+      </select>
+      <button class="page-btn" onclick="prevPage()" id="prevBtn"><i class="fas fa-chevron-left"></i></button> 
+      <span id="pageInfo" style="font-weight:600; min-width:60px; text-align:center;">หน้า 1 / 1</span> 
+      <button class="page-btn" onclick="nextPage()" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    
+  </div>
+</div>
+
+<!-- Packing Modal -->
+<div id="packingModal" class="overlay">
+  <div class="packing-modal-content">
+    <div class="packing-modal-header">
+      <div>
+        <div id="modalOrderId" class="order-id"></div>
+        <div class="badge-container">
+          <div id="modalBranchBadge" class="branch-badge"></div>
+          <a href="#" id="modalPhoneBadge" class="phone-badge" style="display:none;"></a>
+        </div>
+      </div>
+      <button class="packing-modal-close" onclick="closeM('packingModal')">&times;</button>
+    </div>
+    <div id="modalChecklist" class="packing-modal-body">
+      <!-- Checklist will be rendered here by JS -->
+    </div>
+    <div class="packing-modal-footer" style="padding: 20px; background: #FFF; border-top: 1px solid #EEE; box-shadow: 0 -5px 15px rgba(0,0,0,0.03); flex-shrink: 0;">
+      <button id="modalActionBtn" class="action-btn" style="margin-top:0;" disabled onclick="openStockModal()">
+        <i class="fas fa-check-circle"></i> แพ็คของครบแล้ว
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmStockModal" class="overlay">
+  <div class="modal-card">
+    <i class="fas fa-box-open" style="font-size: 60px; color: var(--primary); margin-bottom: 20px;"></i>
+    <h2 style="margin-top: 0; font-family: 'Prompt'; color: var(--dark);">ยืนยันแพ็คของเสร็จสิ้น</h2>
+    <p style="color: #666; margin-bottom: 30px; font-size: 15px;">
+      ออเดอร์ <b id="confirmStockId" style="color: var(--primary); font-size: 18px;"></b><br> ถูกจัดเตรียมครบถ้วนแล้วใช่หรือไม่?
+    </p>
+    <div style="display: flex; gap: 15px;">
+      <button class="action-btn" style="background: #F5F5F5; color: #333; margin-top: 0;" onclick="closeM('confirmStockModal')">ยกเลิก</button>
+      <button class="action-btn" style="background: var(--primary); color: white; margin-top: 0;" onclick="executeMarkPacked()">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * ⚙️ Stock Station - Logic Engine (Full Expansion)
+   * เวอร์ชั่น: High-Speed Client Search + Server Deep Search
+   */
+  
+  let tasks = [];
+  let currentPage = 1;
+  let pageLimit = 5;
+  let pendingStockId = "";
+  
+  // NEW function to open the packing modal
+  function openPackingModal(orderId) {
+    const task = tasks.find(t => t.id === orderId);
+    if (!task) return;
+
+    // 1. Populate Header
+    document.getElementById('modalOrderId').innerText = task.id;
+    document.getElementById('modalBranchBadge').innerHTML = `<i class="fas fa-store"></i> ${task.branch}`;
+    const phoneBadge = document.getElementById('modalPhoneBadge');
+    if (task.phone) {
+      phoneBadge.href = `tel:${task.phone}`;
+      phoneBadge.innerHTML = `<i class="fas fa-phone"></i> ${task.phone}`;
+      phoneBadge.style.display = 'inline-flex';
+    } else {
+      phoneBadge.style.display = 'none';
+    }
+
+    // 2. Build and Render Checklist
+    let itemsArray = task.items.split('\n').filter(line => line.trim() !== "");
+    let itemsHtml = itemsArray.map((item, index) => {
+      const storageKey = `chk_${task.id}_${index}`;
+      const isChecked = localStorage.getItem(storageKey) === 'true';
+      let cleanItem = item.replace(/ \(เหลือ:.*?, สั่ง:(.*?)\)/, ' x <b style="color:var(--primary)">$1</b>');
+      
+      return `
+        <label class="check-row ${isChecked ? 'checked' : ''}" id="modal-row-${task.id}-${index}">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="validateOrder('${task.id}', ${index}, this)" class="check-${task.id}">
+          <span>${cleanItem}</span>
+        </label>
+      `;
+    }).join('');
+    document.getElementById('modalChecklist').innerHTML = itemsHtml;
+
+    // 3. Setup Footer Button and Initial Check
+    document.getElementById('modalActionBtn').setAttribute('onclick', `openStockModal('${task.id}')`);
+    validateOrder(orderId, -1, { checked: false }); 
+    document.getElementById('packingModal').style.display = 'flex';
+  }
+  // ตัวแปรสำหรับเก็บสถานะการค้นหาลึก
+  let activeDeepSearch = "";
+  
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyhihDfPlnqdOGlqfnvTBeax43pC0MuezYWaL3AQAzYM0zgtrEhMrYH8JFfKdnNd48I/exec";
+  const TOKEN_KEY = "coffee_today_admin_token";
+
+  /** 🍞 Toast Notification Helper */
+  function showToast(msg, type = 'normal') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = `<i class="${type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle'}"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.5s forwards';
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+
+  window.onload = function() {
+    // 🛡️ เปิดหน้าจอทำงานทันที (ไม่ต้องสนหน้าต่างล็อคอิน)
+    document.getElementById('main-app').style.display = 'block';
+    
+    // 🚀 Bypass: ใช้ Master Token สำหรับครัวเลย ไม่ต้องรอ GAS อนุมัติ
+    const KITCHEN_TOKEN = "CT_KITCHEN_AUTH_TOKEN_SECRET";
+    localStorage.setItem(TOKEN_KEY, KITCHEN_TOKEN);
+    
+    refreshTasks(KITCHEN_TOKEN);
+    
+    // ตั้งค่า Auto Refresh ทุก 3 นาที
+    setInterval(function() {
+      if (activeDeepSearch === "") {
+          refreshTasks(KITCHEN_TOKEN);
+      }
+    }, 180000);
+  };
+
+  function handleLogout() { 
+    localStorage.removeItem(TOKEN_KEY); 
+    location.reload(); 
+  }
+
+  /** ✅ โหลดคิวงาน Pending (โหมดปกติ) */
+  function refreshTasks(token) {
+    
+    const t = token || localStorage.getItem(TOKEN_KEY);
+    const v = new Date().getTime(); // 🚀 Cache Buster
+    
+    // ดึงเฉพาะบิล Pending
+    fetch(GAS_URL + '?action=getOrdersByStatus&status=Pending&token=' + t + '&v=' + v)
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(newData) {
+        if (Array.isArray(newData)) {
+          tasks = newData;
+          
+          // 🧹 GOD MODE: Self-Healing Garbage Collector ล้างแคชบิลที่ปิดไปแล้วคืนพื้นที่ให้ iPad
+          const activeIds = tasks.map(t => t.id);
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('chk_')) {
+              const orderId = key.split('_')[1];
+              if (orderId && !activeIds.includes(orderId)) {
+                localStorage.removeItem(key);
+              }
+            }
+          });
+          
+          renderTasks();
+        } else if (newData && newData.status === 'expired') {
+          // 🔄 Reset กุญแจ Master ทันที
+          const KITCHEN_TOKEN = "CT_KITCHEN_AUTH_TOKEN_SECRET";
+          localStorage.setItem(TOKEN_KEY, KITCHEN_TOKEN);
+          refreshTasks(KITCHEN_TOKEN);
+        } else {
+          tasks = [];
+          renderTasks();
+        }
+      })
+      .catch(function(err) {
+        console.error("Refresh Error:", err);
+      });
+  }
+
+  /** * ✅ NEW: ระบบค้นหาทะลุมิติ (Deep Search Engine) 
+   * ค้นหาบิลเก่าๆ ที่แพ็คเสร็จไปแล้วกลับมาดูได้
+   */
+  function executeDeepSearch() {
+    
+    const input = document.getElementById('sQuery');
+    const queryVal = input.value.trim();
+    
+    if (queryVal === "") {
+      showToast("กรุณาพิมพ์สิ่งที่ต้องการค้นหาก่อนครับ");
+      return;
+    }
+    
+    const btnSearch = document.getElementById('deepSearchBtn');
+    btnSearch.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btnSearch.disabled = true;
+    
+    activeDeepSearch = queryVal;
+    
+    const token = localStorage.getItem(TOKEN_KEY);
+    const v = new Date().getTime(); // 🚀 Cache Buster: ป้องกันการค้นหาแล้วเจอผลลัพธ์เดิมจากแคช
+    const searchUrl = GAS_URL + '?action=getOrdersByStatus&status=Pending&q=' + encodeURIComponent(queryVal) + '&token=' + token + '&v=' + v;
+    
+    fetch(searchUrl)
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(foundData) {
+        
+        tasks = foundData;
+        currentPage = 1;
+        renderTasks();
+        
+        // สลับปุ่มค้นหากับปุ่มล้าง
+        btnSearch.style.display = "none";
+        document.getElementById('clearSearchBtn').style.display = "inline-flex";
+        
+        btnSearch.innerHTML = 'ค้นหาลึก';
+        btnSearch.disabled = false;
+        
+      })
+      .catch(function(err) {
+        showToast("การค้นหาล้มเหลว กรุณาลองใหม่", 'error');
+        btnSearch.innerHTML = 'ค้นหาลึก';
+        btnSearch.disabled = false;
+      });
+  }
+
+  /** ✅ ล้างการค้นหาลึก กลับสู่โหมดบิลใหม่ */
+  function clearDeepSearch() {
+    
+    document.getElementById('sQuery').value = "";
+    activeDeepSearch = "";
+    
+    document.getElementById('deepSearchBtn').style.display = "inline-flex";
+    document.getElementById('clearSearchBtn').style.display = "none";
+    
+    const container = document.getElementById('taskList');
+    container.innerHTML = '<div style="text-align:center; padding:50px; color:#AAA;"><i class="fas fa-circle-notch fa-spin" style="font-size:30px;"></i><p>กำลังรีเฟรชคิวงาน...</p></div>';
+    
+    refreshTasks();
+  }
+
+  /** ✅ สร้าง UI หน้าจอคิวงาน (รองรับ Client Search Filter) */
+  function renderTasks() {
+    
+    const container = document.getElementById('taskList');
+    const query = document.getElementById('sQuery').value.trim().toLowerCase();
+
+    // ตัวกรองอัจฉริยะหน้าจอ (Client-side)
+    let filteredTasks = tasks.filter(function(t) {
+      
+      if (!query) {
+        return true;
+      }
+      
+      const orderNum = t.id.replace(/\D/g, ''); 
+      const shortNum = parseInt(orderNum).toString();
+      const phoneStr = t.phone ? t.phone.toString() : "";
+      
+      const matchId = t.id.toLowerCase().includes(query);
+      const matchNum = orderNum.includes(query);
+      const matchShort = (shortNum === query);
+      const matchBranch = (t.branch && t.branch.toLowerCase().includes(query));
+      const matchPhone = phoneStr.includes(query);
+      
+      return matchId || matchNum || matchShort || matchBranch || matchPhone;
+    });
+
+    if(filteredTasks.length === 0) {
+      
+      let msg = "ไม่พบคิวงานในระบบ...";
+      if (activeDeepSearch !== "") {
+        msg = "ค้นหาลึกไม่พบบิลที่ระบุ...";
+      }
+      
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-box-open" style="font-size:60px; color:#E0E0E0; margin-bottom:15px;"></i><h2 style="color:#CCC; margin:0;">' + msg + '</h2></div>';
+      document.getElementById('pageInfo').innerText = "หน้า 1 / 1";
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      
+      return;
+    }
+    
+    // จัดการแบ่งหน้า
+    const totalPages = Math.ceil(filteredTasks.length / pageLimit);
+    if(currentPage > totalPages) {
+      currentPage = totalPages || 1;
+    }
+    
+    const startIdx = (currentPage - 1) * pageLimit;
+    const paginatedTasks = filteredTasks.slice(startIdx, startIdx + pageLimit);
+
+    let htmlBuilder = '';
+    paginatedTasks.forEach(function(t) {
+      
+      // Simplified item list for summary
+      let itemsArray = t.items.split('\n').filter(function(line) {
+        return line.trim() !== "";
+      });
+      let summaryItems = itemsArray.slice(0, 2).join(', ').replace(/ \(.*?\)/g, '');
+      if (itemsArray.length > 2) {
+        summaryItems += ` และอีก ${itemsArray.length - 2} รายการ...`;
+      }
+
+      let statusBadge = '';
+      let isAlreadyDone = false;
+      if (t.status === 'Packed' || t.status === 'Success') {
+        isAlreadyDone = true;
+        statusBadge = '<div class="success-badge"><i class="fas fa-check-circle"></i> รายการนี้จัดการสำเร็จแล้ว (' + t.status + ')</div>';
+      }
+
+      let phoneBadge = '';
+      if (t.phone) {
+        phoneBadge = `<a href="tel:${t.phone}" class="phone-badge" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ${t.phone}</a>`;
+      }
+      
+      htmlBuilder += `<div class="task-card" id="taskCard-${t.id}" ${isAlreadyDone ? '' : `onclick="openPackingModal('${t.id}')"`} style="${isAlreadyDone ? 'cursor:default;' : 'cursor:pointer;'}">`;
+      htmlBuilder += '<div class="task-header">';
+      htmlBuilder += '<div>';
+      htmlBuilder += '<div class="order-id">' + t.id + '</div>';
+      htmlBuilder += '<div class="badge-container">';
+      htmlBuilder += '<div class="branch-badge"><i class="fas fa-store"></i> ' + t.branch + '</div>';
+      htmlBuilder += phoneBadge;
+      htmlBuilder += '</div>';
+      htmlBuilder += statusBadge;
+      htmlBuilder += '</div>';
+      htmlBuilder += '<div class="task-time"><i class="far fa-clock" style="margin-right: 4px;"></i> ' + (t.date || t.time) + '</div>';
+      htmlBuilder += '</div>';
+      
+      if (!isAlreadyDone) {
+        htmlBuilder += `<div style="font-size:12px; color:#666; margin-top:10px; padding:8px; background:#fafafa; border-radius:8px;">${summaryItems}</div>`;
+      }
+      
+      htmlBuilder += '</div>';
+    });
+    
+    container.innerHTML = htmlBuilder;
+    
+    document.getElementById('pageInfo').innerText = "หน้า " + currentPage + " / " + totalPages;
+    document.getElementById('prevBtn').disabled = (currentPage === 1);
+    document.getElementById('nextBtn').disabled = (currentPage === totalPages);
+  }
+
+  function changePageLimit() { 
+    pageLimit = parseInt(document.getElementById('pgLimit').value); 
+    currentPage = 1; 
+    renderTasks(); 
+  }
+  
+  function nextPage() { 
+    currentPage++; 
+    renderTasks(); 
+  }
+  
+  function prevPage() { 
+    currentPage--; 
+    renderTasks(); 
+  }
+
+  /** ✅ ระบบตรวจสอบการติ๊ก Checklist */
+  function validateOrder(orderId, index, checkboxElement) {
+    
+    if (index >= 0) { // Only update UI for actual checkbox clicks
+        const row = document.getElementById('modal-row-' + orderId + '-' + index);
+        const storageKey = 'chk_' + orderId + '_' + index;
+        
+        if(checkboxElement.checked) {
+          row.classList.add('checked'); 
+          localStorage.setItem(storageKey, 'true');
+        } else {
+          row.classList.remove('checked');
+          localStorage.removeItem(storageKey);
+        }
+    }
+    
+    const allChecks = document.querySelectorAll('.check-' + orderId);
+    const checkedCount = Array.from(allChecks).filter(c => c.checked).length;
+    const actionBtn = document.getElementById('modalActionBtn');
+    
+    if (actionBtn) {
+        if (checkedCount === allChecks.length && allChecks.length > 0) {
+          actionBtn.disabled = false;
+        } else {
+          actionBtn.disabled = true;
+        }
+    }
+  }
+
+  function closeM(id) { 
+    document.getElementById(id).style.display = 'none'; 
+  }
+
+  /** ✅ เปิดป๊อปอัป Modal ยืนยันการแพ็ค */
+  function openStockModal(id) {
+    pendingStockId = id;
+    document.getElementById('confirmStockId').innerText = id;
+    document.getElementById('confirmStockModal').style.display = 'flex';
+  }
+
+  /** ✅ ฟังก์ชันกดยืนยัน (Optimistic Update ทำให้ระบบรู้สึกไวขึ้น) */
+  function executeMarkPacked() {
+    
+    closeM('confirmStockModal');
+    closeM('packingModal');
+    
+    if(!pendingStockId) {
+      return;
+    }
+    const idToUpdate = pendingStockId;
+
+    // 🧹 Memory Auto-Cleanup: ล้างข้อมูล checkbox ของออเดอร์นี้ออกจากเครื่อง
+    Object.keys(localStorage).forEach(function(key) {
+      if (key.startsWith('chk_' + idToUpdate)) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    showToast("กำลังยืนยันออเดอร์ " + idToUpdate + "...", "success");
+
+    // ลบการ์ดออกจากหน้าจอทันที เพื่อความรวดเร็ว (Client-Side Filtering)
+    setTimeout(function() {
+      
+      tasks = tasks.filter(function(t) {
+        return t.id !== idToUpdate;
+      });
+      
+      renderTasks();
+      
+    }, 400); 
+
+    // ส่งคำสั่งไปอัปเดตสถานะที่ Google Sheets เงียบๆ เบื้องหลัง
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    fetch(GAS_URL + '?action=setOrderStatus&id=' + idToUpdate + '&status=Packed&token=' + token)
+      .catch(function(err) {
+        console.error("Stock update failed in background:", err);
+      });
+  }
+</script>
+</body>
+</html>

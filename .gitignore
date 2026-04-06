@@ -1,0 +1,14 @@
+# 🧠 AI Memory & Brain Data (ห้ามไฟล์สมองกลหลุดขึ้น Git เด็ดขาด)
+Ai-BuH/
+brain_data/
+MEMORY.md
+SESSION_LOGS*.md
+BOSS_ACTION_REQUIRED.md
+SYSTEM_ACCESS.md
+
+# ⚙️ Backend Scripts (ห้ามโค้ดหลังบ้านหลุด)
+Code*.gs
+*.gs
+
+# 💻 Local Editor Settings
+.vscode/
