@@ -1315,8 +1315,9 @@ function downloadPDF() {
 
   pdfWindow.document.write(`<!DOCTYPE html><html lang="th"><head><style>body{font-family:sans-serif;padding:40px;color:#333;}.main-container{padding:60px;border:2px solid #EEE;border-radius:30px;max-width:700px;margin:0 auto;}.title-main{text-align:center;color:#A91D3A;font-size:32px;font-weight:bold;}.grid-data{display:flex;justify-content:space-between;background:#F9F9F9;padding:25px;border-radius:20px;margin-bottom:30px;}.grid-col-label{font-size:10px;color:#999;text-transform:uppercase;font-weight:bold;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:15px;border-bottom:2px solid #333;font-size:14px;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script></head><body>`);
   pdfWindow.document.write('<div id="p-area" class="main-container"><div class="title-main">COFFEETODAY</div><div style="text-align:center;color:#999;margin-bottom:40px;">ORDER CONFIRMATION RECEIPT</div>');
-  pdfWindow.document.write('<div class="grid-data"><div><div class="grid-col-label">REFERENCE ID</div><div style="font-weight:bold;">'+targetOrder.id+'</div><div style="height:15px;"></div><div class="grid-col-label">BRANCH STORE</div><div style="font-weight:bold;">'+targetOrder.branch+'</div></div><div style="text-align:right;"><div class="grid-col-label">ISSUE DATE</div><div style="font-weight:bold;">'+targetOrder.date+'</div><div style="height:15px;"></div><div class="grid-col-label">CONTACT PHONE</div><div style="font-weight:bold;">'+(targetOrder.phone || '-')+'</div></div></div>');
-  pdfWindow.document.write('<table><thead><tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>'+rowsBuilder+'</tbody></table>');
+  pdfWindow.document.write('<table><thead>');
+  pdfWindow.document.write('<tr><td colspan="3" style="padding:0; border:none; background:white;"><div class="grid-data"><div><div class="grid-col-label">REFERENCE ID</div><div style="font-weight:bold;">'+targetOrder.id+'</div><div style="height:15px;"></div><div class="grid-col-label">BRANCH STORE</div><div style="font-weight:bold;">'+targetOrder.branch+'</div></div><div style="text-align:right;"><div class="grid-col-label">ISSUE DATE</div><div style="font-weight:bold;">'+targetOrder.date+'</div><div style="height:15px;"></div><div class="grid-col-label">CONTACT PHONE</div><div style="font-weight:bold;">'+(targetOrder.phone || '-')+'</div></div></div></td></tr>');
+  pdfWindow.document.write('<tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>'+rowsBuilder+'</tbody></table>');
   pdfWindow.document.write('<div style="text-align:center;margin-top:50px;font-size:11px;color:#AAA;border-top:1px dashed #DDD;padding-top:20px;"><p>เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าของ CoffeeToday เท่านั้น</p></div></div>');
   pdfWindow.document.write('<script>window.onload=()=>{html2pdf().set({margin:10,filename:"Receipt.pdf",html2canvas:{scale:1.5},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from(document.getElementById("p-area")).save().then(()=>{setTimeout(()=>window.close(),1500)});};<\/script></body></html>');
   pdfWindow.document.close();
@@ -2057,9 +2058,9 @@ function next() {
         if(line.trim() !== "") {
           const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
           if(match) {
-            rowsHtml += `<tr><td style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(match[1])}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(match[2])}</td><td align="center" style="padding:15px 10px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A;">${escapeHTML(match[3])}</td></tr>`;
+            rowsHtml += `<tr><td style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[1])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[2])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A; font-size:14px;">${escapeHTML(match[3])}</td></tr>`;
           } else {
-            rowsHtml += `<tr><td colspan="3" style="padding:15px 10px; border-bottom:1px solid #f9f9f9;">${escapeHTML(line)}</td></tr>`;
+            rowsHtml += `<tr><td colspan="3" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(line)}</td></tr>`;
           }
         }
       });
@@ -2067,24 +2068,33 @@ function next() {
       const pTimeFormatted = formatPackedTime(item.packedTime);
       let packedTag = '';
       if (item.status === 'Packed' || item.status === 'Success') {
-        packedTag = `<div style="background:#f0fdf4; border:1px dashed #10b981; padding:15px; border-radius:12px; text-align:center; color:#065f46; margin-bottom:20px;">
-          <div style="font-weight:bold; font-size:16px;">✓ ยืนยันการจัดเตรียมพัสดุเรียบร้อย</div>
-          ${pTimeFormatted !== "-" ? `<div style="font-size:13px; margin-top:5px; font-weight:normal;">(เวลาบรรจุ: ${pTimeFormatted})</div>` : ''}
+        packedTag = `<div style="background:#f0fdf4; border:1px dashed #10b981; padding:10px; border-radius:8px; text-align:center; color:#065f46; margin-bottom:15px;">
+          <div style="font-weight:bold; font-size:14px;">✓ ยืนยันการจัดเตรียมพัสดุเรียบร้อย</div>
+          ${pTimeFormatted !== "-" ? `<div style="font-size:11px; margin-top:3px; font-weight:normal;">(เวลาบรรจุ: ${pTimeFormatted})</div>` : ''}
         </div>`;
       }
 
       let phoneDisplay = (item.phone || '').toString().trim();
       if (phoneDisplay.length > 0 && !phoneDisplay.startsWith('0')) phoneDisplay = '0' + phoneDisplay;
 
-      win.document.write(`<html><head><title>Print Order ${item.id}</title><style>body{font-family:'Prompt',sans-serif;padding:40px;color:#333;}.label{font-size:10px;color:#999;text-transform:uppercase;}.val{font-size:16px;font-weight:bold;margin-bottom:20px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:12px;background:#F9FAFB;border-bottom:2px solid #333;font-size:13px;}</style></head><body>
-        <div style="text-align:center;margin-bottom:30px;"><h2 style="margin:0;color:#A91D3A;letter-spacing:2px;">COFFEETODAY</h2><div style="font-size:12px;color:#999;">ORDER CONFIRMATION RECEIPT</div></div>
+      win.document.write(`<html><head><title>Print Order ${item.id}</title><style>@media print { @page { margin: 10mm; } thead { display: table-header-group; } } body{font-family:'Prompt',sans-serif;padding:20px;color:#333;}.label{font-size:10px;color:#999;text-transform:uppercase;}.val{font-size:14px;font-weight:bold;margin-bottom:10px;}table{width:100%;border-collapse:collapse;}th{text-align:left;padding:8px 5px;background:#F9FAFB;border-bottom:2px solid #333;font-size:12px;}</style></head><body>
+        <div style="text-align:center;margin-bottom:15px;"><h2 style="margin:0;color:#A91D3A;letter-spacing:1px;font-size:20px;">COFFEETODAY</h2><div style="font-size:11px;color:#999;">ORDER CONFIRMATION RECEIPT</div></div>
         ${packedTag}
-        <div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:20px;border-radius:15px;margin-bottom:30px;">
-          <div><div class="label">Reference ID</div><div class="val">${item.id}</div><div class="label">Branch Store</div><div class="val" style="margin-bottom:0;">${item.branch}</div></div>
-          <div style="text-align:right;"><div class="label">Issue Date</div><div class="val">${item.date}</div><div class="label">Contact Phone</div><div class="val" style="margin-bottom:0;">${phoneDisplay || '-'}</div></div>
-        </div>
-        <table><thead><tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr></thead><tbody>${rowsHtml}</tbody></table>
-        <div style="text-align:center;margin-top:40px;font-size:11px;color:#AAA;border-top:1px dashed #DDD;padding-top:20px;"><p>เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าเท่านั้น</p></div>
+        <table>
+          <thead>
+            <tr>
+              <td colspan="3" style="border:none; padding:0; background:white;">
+                <div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:12px 15px;border-radius:10px;margin-bottom:15px;">
+                  <div><div class="label">Reference ID</div><div class="val">${item.id}</div><div class="label">Branch Store</div><div class="val" style="margin-bottom:0;font-size:13px;">${item.branch}</div></div>
+                  <div style="text-align:right;"><div class="label">Issue Date</div><div class="val">${item.date}</div><div class="label">Contact Phone</div><div class="val" style="margin-bottom:0;font-size:13px;">${phoneDisplay || '-'}</div></div>
+                </div>
+              </td>
+            </tr>
+            <tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <div style="text-align:center;margin-top:20px;font-size:10px;color:#AAA;border-top:1px dashed #DDD;padding-top:10px;"><p style="margin:0;">เอกสารฉบับนี้ใช้สำหรับยืนยันการจัดเตรียมสินค้าเท่านั้น</p></div>
         <script>window.onafterprint = () => window.close(); window.print();<\/script></body></html>`);
       win.document.close();
     } catch(e) { console.error("Print error", e); }
