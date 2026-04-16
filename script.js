@@ -124,7 +124,29 @@ function escapeHTML(str) {
   });
 }
 
-// 🔥 Firebase Real-time Stock Engine (Hybrid System)
+// 🚀 ฟังก์ชันเช็คและติดป้ายกำกับ "สินค้าพิมพ์เอง" (ไม่อยู่ในฐานข้อมูล)
+function formatItemName(pName, isHtml = false) {
+  let isKnown = false;
+  const cleanPName = (pName || '').trim();
+  
+  if (typeof menuObj !== 'undefined' && menuObj.grouped) {
+    for (const cat in menuObj.grouped) {
+      if (menuObj.grouped[cat].some(p => p.name === cleanPName)) {
+        isKnown = true;
+        break;
+      }
+    }
+  }
+  
+  const safeName = isHtml ? escapeHTML(cleanPName) : cleanPName;
+  if (isKnown || cleanPName === '') return safeName;
+  
+  return isHtml 
+    ? `${safeName} <span style="color:#d97706; font-size:11px; font-weight:600; margin-left:4px;">(*พิมพ์เอง)</span>`
+    : `${safeName} (*พิมพ์เอง)`;
+}
+
+// � Firebase Real-time Stock Engine (Hybrid System)
 window.realtimeStock = {};
 
 function initRealtimeStock() {
@@ -1173,6 +1195,7 @@ function viewOrderDetail(orderId) {
       '<div style="text-align:right;"><div class="receipt-label">Order Date</div><div class="receipt-value">' + foundOrder.date + '</div></div>' +
       '<div><div class="receipt-label">Branch Store</div><div class="receipt-value">' + foundOrder.branch + '</div></div>' +
       '<div style="text-align:right;"><div class="receipt-label">Contact</div><div class="receipt-value">' + (foundOrder.phone || '-') + '</div></div>' +
+      ((foundOrder.remark || foundOrder.remarks) ? '<div style="grid-column: 1 / -1; margin-top: 5px; background: #fff1f2; padding: 10px; border-radius: 8px; border-left: 4px solid #be123c;"><div class="receipt-label" style="color: #be123c;">หมายเหตุ (Remark)</div><div class="receipt-value" style="color: #9f1239; font-size: 14px; font-weight: 600;">' + escapeHTML(foundOrder.remark || foundOrder.remarks) + '</div></div>' : '') +
       alertHtml +
     '</div>' +
     '<table class="receipt-table">' +
@@ -1211,7 +1234,7 @@ function downloadCSV() {
     let csvContent = "\uFEFF";
     
     // สร้าง Header
-    csvContent += "วันที่,เวลา,เลขบิล,สาขา,หมวดหมู่,ชื่อสินค้า,จำนวน (ชิ้น),ชื่อลูกค้า,เบอร์โทรศัพท์,สถานะ\n";
+    csvContent += "วันที่,เวลา,เลขบิล,สาขา,หมวดหมู่,ชื่อสินค้า,จำนวน (ชิ้น),ชื่อลูกค้า,เบอร์โทรศัพท์,สถานะ,หมายเหตุ\n";
 
     // สร้าง Map หมวดหมู่จากเมนู
     let productToCat = {};
@@ -1233,25 +1256,29 @@ function downloadCSV() {
       itemsArr.forEach(line => {
         if (line.trim() === "") return;
         const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
+        
+        // 🚀 Fallback ดักจับรายการที่พิมพ์เองแบบไม่มีแพทเทิร์น (กันข้อมูลหาย)
+        let pName = line.trim();
+        let qty = 1; // ค่าเริ่มต้นถ้าอ่านตัวเลขไม่ได้
+        
         if (match) {
-          const pName = match[1].trim();
-          const qty = parseFloat(match[3].match(/[\d.]+/)?.[0] || 0);
-          const cat = productToCat[pName] || "อื่นๆ";
-          
-          let phoneStr = (o.phone || '').toString().trim();
-          // 🚀 ซ่อมแซมเบอร์โทรที่ถูก Google Sheets ตัดเลข 0 ข้างหน้าออก
-          if (phoneStr.length > 0 && !phoneStr.startsWith('0')) {
-            phoneStr = '0' + phoneStr;
-          }
-
-          // หุ้มด้วย Double Quotes และใช้สูตร Excel สำหรับเบอร์โทร
-          const row = [
-            `"${dStr}"`, `"${tStr}"`, `"${o.id}"`, `"${o.branch || ''}"`,
-            `"${cat}"`, `"${pName.replace(/"/g, '""')}"`, `"${qty}"`,
-            `"${(o.customer || '').replace(/"/g, '""')}"`, `="${phoneStr}"`, `"${o.status}"`
-          ];
-          csvContent += row.join(",") + "\n";
+          pName = match[1].trim();
+          qty = parseFloat(match[3].match(/[\d.]+/)?.[0] || 0);
         }
+        
+        const cat = productToCat[pName] || "อื่นๆ";
+        
+        let phoneStr = (o.phone || '').toString().trim();
+        if (phoneStr.length > 0 && !phoneStr.startsWith('0')) {
+          phoneStr = '0' + phoneStr;
+        }
+
+        const row = [
+          `"${dStr}"`, `"${tStr}"`, `"${o.id}"`, `"${o.branch || ''}"`,
+          `"${cat}"`, `"${pName.replace(/"/g, '""')}"`, `"${qty}"`,
+          `"${(o.customer || '').replace(/"/g, '""')}"`, `="${phoneStr}"`, `"${o.status}"`, `"${((o.remark || o.remarks) || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
       });
     });
 
@@ -1307,6 +1334,9 @@ function downloadPDF() {
                 rowsBuilder += '<td align="center" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:16px; font-weight:bold; color:#A91D3A;">' + escapeHTML(parts[3]) + '</td>';
         rowsBuilder += '</tr>';
       }
+            } else {
+              // 🚀 Fallback ดักจับรายการพิมพ์เองในบิลใบเล็ก (PDF)
+              rowsBuilder += '<tr><td colspan="3" style="padding:15px; border-bottom:1px solid #EEEEEE; font-size:14px; color:#555;">' + escapeHTML(rowLine) + '</td></tr>';
     }
   });
 
@@ -1982,12 +2012,19 @@ function next() {
      ];
  
      allOrders.forEach(o => {
+       // 🚀 แทรก tag (*พิมพ์เอง) สำหรับ PDF สรุป
+       let itemsForPdf = (o.items || '').split('\n').filter(i => i.trim() !== '').map(line => {
+         let match = line.match(/(.+?)\s*\(\s*เหลือ:/);
+         let pName = match ? match[1].trim() : line.trim();
+         return formatItemName(pName, false) + (match ? line.substring(line.indexOf(' (')) : '');
+       }).join(', ').replace(/[\u200B-\u200D\uFEFF]/g, '');
+
        tableBody.push([
          { text: o.id, color: '#A91D3A', bold: true },
          { text: o.date, color: '#666', fontSize: 13 }, // ปรับฟอนต์วันที่ให้ใหญ่ขึ้นสำหรับ THSarabun
          { text: o.branch, bold: true },
-         { text: (o.customer || '').replace(/[\u200B-\u200D\uFEFF]/g, '') }, // 🚀 ล้างอักขระล่องหนในชื่อลูกค้า
-         { text: (o.items || '').replace(/\n/g, ', ').replace(/, $/, '').replace(/[\u200B-\u200D\uFEFF]/g, '') }, // 🚀 ล้างอักขระล่องหน (Zero-width space) ที่ทำให้เกิดสี่เหลี่ยม
+         { text: (o.customer || '').replace(/[\u200B-\u200D\uFEFF]/g, '') + ((o.remark || o.remarks) ? `\n(หมายเหตุ: ${o.remark || o.remarks})` : '') }, // 🚀 ล้างอักขระล่องหนในชื่อลูกค้า + หมายเหตุ
+         { text: itemsForPdf }, // 🚀 แสดง (*พิมพ์เอง) พร้อมล้างอักขระล่องหน
          { text: o.status, alignment: 'center', bold: true }
        ]);
      });
@@ -2058,9 +2095,9 @@ function next() {
         if(line.trim() !== "") {
           const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
           if(match) {
-            rowsHtml += `<tr><td style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[1])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[2])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A; font-size:14px;">${escapeHTML(match[3])}</td></tr>`;
+            rowsHtml += `<tr><td style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(match[1], true)}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[2])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A; font-size:14px;">${escapeHTML(match[3])}</td></tr>`;
           } else {
-            rowsHtml += `<tr><td colspan="3" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(line)}</td></tr>`;
+            rowsHtml += `<tr><td colspan="3" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(line, true)}</td></tr>`;
           }
         }
       });
@@ -2088,6 +2125,7 @@ function next() {
                   <div><div class="label">Reference ID</div><div class="val">${item.id}</div><div class="label">Branch Store</div><div class="val" style="margin-bottom:0;font-size:13px;">${item.branch}</div></div>
                   <div style="text-align:right;"><div class="label">Issue Date</div><div class="val">${item.date}</div><div class="label">Contact Phone</div><div class="val" style="margin-bottom:0;font-size:13px;">${phoneDisplay || '-'}</div></div>
                 </div>
+                ${(item.remark || item.remarks) ? `<div style="background:#fef2f2; padding:10px 15px; border-radius:10px; margin-bottom:15px; border: 1px dashed #fecdd3;"><div class="label" style="color:#e11d48;">หมายเหตุ (Remark)</div><div class="val" style="margin-bottom:0; font-size:13px; color:#be123c;">${escapeHTML(item.remark || item.remarks)}</div></div>` : ''}
               </td>
             </tr>
             <tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr>

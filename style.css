@@ -1264,7 +1264,7 @@ td .fa-trash-alt:hover {
 }
 .premium-input {
   width: 100%; padding: 12px 14px; background: #F9FAFB;
-  border: 1px solid #E5E7EB; border-radius: 8px; font-family: 'Sarabun';
+  border: 1px solid #E5E7EB; border-radius: 8px; font-family: 'Prompt', sans-serif;
   font-size: 15px; color: #1A1C1E; transition: 0.2s; box-sizing: border-box;
   outline: none;
 }
