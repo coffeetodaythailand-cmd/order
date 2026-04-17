@@ -2095,9 +2095,9 @@ function next() {
         if(line.trim() !== "") {
           const match = line.match(/(.+?)\s*\(\s*เหลือ:\s*(.*?)\s*,\s*สั่ง:\s*(.*?)\s*\)/);
           if(match) {
-            rowsHtml += `<tr><td style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(match[1], true)}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[2])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A; font-size:14px;">${escapeHTML(match[3])}</td></tr>`;
+            rowsHtml += `<tr><td style="border-bottom:1px solid #f9f9f9;"></td><td style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(match[1], true)}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${escapeHTML(match[2])}</td><td align="center" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-weight:bold; color:#A91D3A; font-size:14px;">${escapeHTML(match[3])}</td><td style="border-bottom:1px solid #f9f9f9;"></td></tr>`;
           } else {
-            rowsHtml += `<tr><td colspan="3" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(line, true)}</td></tr>`;
+            rowsHtml += `<tr><td colspan="5" style="padding:8px 5px; border-bottom:1px solid #f9f9f9; font-size:13px;">${formatItemName(line, true)}</td></tr>`;
           }
         }
       });
@@ -2120,7 +2120,7 @@ function next() {
         <table>
           <thead>
             <tr>
-              <td colspan="3" style="border:none; padding:0; background:white;">
+              <td colspan="5" style="border:none; padding:0; background:white;">
                 <div style="display:flex;justify-content:space-between;background:#F9F9F9;padding:12px 15px;border-radius:10px;margin-bottom:15px;">
                   <div><div class="label">Reference ID</div><div class="val">${item.id}</div><div class="label">Branch Store</div><div class="val" style="margin-bottom:0;font-size:13px;">${item.branch}</div></div>
                   <div style="text-align:right;"><div class="label">Issue Date</div><div class="val">${item.date}</div><div class="label">Contact Phone</div><div class="val" style="margin-bottom:0;font-size:13px;">${phoneDisplay || '-'}</div></div>
@@ -2128,7 +2128,7 @@ function next() {
                 ${(item.remark || item.remarks) ? `<div style="background:#fef2f2; padding:10px 15px; border-radius:10px; margin-bottom:15px; border: 1px dashed #fecdd3;"><div class="label" style="color:#e11d48;">หมายเหตุ (Remark)</div><div class="val" style="margin-bottom:0; font-size:13px; color:#be123c;">${escapeHTML(item.remark || item.remarks)}</div></div>` : ''}
               </td>
             </tr>
-            <tr><th>Product Item</th><th style="text-align:center;">Last Stock</th><th style="text-align:center;">Qty</th></tr>
+            <tr><th style="width: 10%;"></th><th style="width: 50%;">Product Item</th><th style="text-align:center; width: 15%;">Last Stock</th><th style="text-align:center; width: 10%;">Qty</th><th style="width: 15%;"></th></tr>
           </thead>
           <tbody>${rowsHtml}</tbody>
         </table>
