@@ -899,7 +899,8 @@ function renderTable() {
     
     const customerName = order.customer.toLowerCase();
     const branchName = order.branch ? order.branch.toLowerCase() : "";
-    const phoneNum = order.phone ? order.phone.toString() : "";
+    let phoneNum = order.phone ? order.phone.toString().trim() : "";
+    if (phoneNum.length > 0 && !phoneNum.startsWith('0')) phoneNum = '0' + phoneNum;
     
     const isIdMatch = (fullId.indexOf(queryLower) !== -1);
     const isNumMatch = (numOnlyId.indexOf(queryLower) !== -1);
@@ -928,6 +929,9 @@ function renderTable() {
 
     const badgeClass = isSuccessStatus ? 'os-success' : (isPackedStatus ? 'os-packed' : 'os-pending');
     
+    let phoneDisplay = (item.phone || '').toString().trim();
+    if (phoneDisplay.length > 0 && !phoneDisplay.startsWith('0')) phoneDisplay = '0' + phoneDisplay;
+
     // 🚀 NITRO FIX: Smart Truncate ย่อรายการสินค้าไม่ให้ดันตารางจนล้นจอ (แสดงสูงสุดแค่ 2 รายการ)
     const rawItemsList = (item.items || '').split('\n').map(i => i.trim()).filter(i => i !== '');
     let itemsFormatted = '';
@@ -947,7 +951,7 @@ function renderTable() {
       <td style="color:#666; font-size:13px;">${item.date}</td>
       <td><b style="color:#333; font-size:14px;">${item.branch}</b></td>
       <td style="font-weight:600; font-size:14px;">${item.customer}</td>
-      <td style="font-weight:700; color:var(--blue); font-size:14px;">${item.phone || '-'}</td>
+      <td style="font-weight:700; color:var(--blue); font-size:14px;">${phoneDisplay || '-'}</td>
       <td style="font-size:13px; color:#555; line-height:1.3;">${itemsFormatted}</td>
       <td align="center">
         <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
@@ -1190,11 +1194,14 @@ function viewOrderDetail(orderId) {
     alertHtml += '</div>';
   }
   
+  let phoneDisplay = (foundOrder.phone || '').toString().trim();
+  if (phoneDisplay.length > 0 && !phoneDisplay.startsWith('0')) phoneDisplay = '0' + phoneDisplay;
+
   const modalContent = '<div class="receipt-info-grid">' +
       '<div><div class="receipt-label">Order ID</div><div class="receipt-value">' + foundOrder.id + '</div></div>' + 
       '<div style="text-align:right;"><div class="receipt-label">Order Date</div><div class="receipt-value">' + foundOrder.date + '</div></div>' +
       '<div><div class="receipt-label">Branch Store</div><div class="receipt-value">' + foundOrder.branch + '</div></div>' +
-      '<div style="text-align:right;"><div class="receipt-label">Contact</div><div class="receipt-value">' + (foundOrder.phone || '-') + '</div></div>' +
+      '<div style="text-align:right;"><div class="receipt-label">Contact</div><div class="receipt-value">' + (phoneDisplay || '-') + '</div></div>' +
       ((foundOrder.remark || foundOrder.remarks) ? '<div style="grid-column: 1 / -1; margin-top: 5px; background: #fff1f2; padding: 10px; border-radius: 8px; border-left: 4px solid #be123c;"><div class="receipt-label" style="color: #be123c;">หมายเหตุ (Remark)</div><div class="receipt-value" style="color: #9f1239; font-size: 14px; font-weight: 600;">' + escapeHTML(foundOrder.remark || foundOrder.remarks) + '</div></div>' : '') +
       alertHtml +
     '</div>' +
