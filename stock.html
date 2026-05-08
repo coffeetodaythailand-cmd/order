@@ -509,9 +509,13 @@
     document.getElementById('modalOrderId').innerText = task.id;
     document.getElementById('modalBranchBadge').innerHTML = `<i class="fas fa-store"></i> ${task.branch}`;
     const phoneBadge = document.getElementById('modalPhoneBadge');
-    if (task.phone) {
-      phoneBadge.href = `tel:${task.phone}`;
-      phoneBadge.innerHTML = `<i class="fas fa-phone"></i> ${task.phone}`;
+    
+    let phoneDisplay = (task.phone || '').toString().trim();
+    if (phoneDisplay.length > 0 && !phoneDisplay.startsWith('0')) phoneDisplay = '0' + phoneDisplay;
+
+    if (phoneDisplay) {
+      phoneBadge.href = `tel:${phoneDisplay}`;
+      phoneBadge.innerHTML = `<i class="fas fa-phone"></i> ${phoneDisplay}`;
       phoneBadge.style.display = 'inline-flex';
     } else {
       phoneBadge.style.display = 'none';
@@ -701,7 +705,8 @@
       
       const orderNum = t.id.replace(/\D/g, ''); 
       const shortNum = parseInt(orderNum).toString();
-      const phoneStr = t.phone ? t.phone.toString() : "";
+      let phoneStr = (t.phone || '').toString().trim();
+      if (phoneStr.length > 0 && !phoneStr.startsWith('0')) phoneStr = '0' + phoneStr;
       
       const matchId = t.id.toLowerCase().includes(query);
       const matchNum = orderNum.includes(query);
@@ -755,9 +760,12 @@
         statusBadge = '<div class="success-badge"><i class="fas fa-check-circle"></i> รายการนี้จัดการสำเร็จแล้ว (' + t.status + ')</div>';
       }
 
+      let phoneDisplay = (t.phone || '').toString().trim();
+      if (phoneDisplay.length > 0 && !phoneDisplay.startsWith('0')) phoneDisplay = '0' + phoneDisplay;
+
       let phoneBadge = '';
-      if (t.phone) {
-        phoneBadge = `<a href="tel:${t.phone}" class="phone-badge" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ${t.phone}</a>`;
+      if (phoneDisplay) {
+        phoneBadge = `<a href="tel:${phoneDisplay}" class="phone-badge" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ${phoneDisplay}</a>`;
       }
       
       htmlBuilder += `<div class="task-card" id="taskCard-${t.id}" ${isAlreadyDone ? '' : `onclick="openPackingModal('${t.id}')"`} style="${isAlreadyDone ? 'cursor:default;' : 'cursor:pointer;'}">`;
